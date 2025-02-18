@@ -143,6 +143,10 @@ class MySQLStorePipeline:
         try:
             self.conn = mysql.connector.connect(**self.db_info)
             self.cursor = self.conn.cursor()
+
+            # ❌ Vider la BDD à chaque lancement du Scrapy Spider
+            self.clean_database()
+
         except MySQLError as e:
             spider.logger.error(f"Erreur de connexion à la base de données : {e}")
             raise
@@ -150,6 +154,20 @@ class MySQLStorePipeline:
     def close_spider(self, spider):
         self.cursor.close()
         self.conn.close()
+
+    def clean_database(self):
+        """ Supprime toutes les données des tables et réinitialise les IDs """
+        try:
+            self.cursor.execute("DELETE FROM Participations;")
+            self.cursor.execute("DELETE FROM films;")
+            self.cursor.execute("DELETE FROM Personnes;")
+            self.cursor.execute("ALTER TABLE films AUTO_INCREMENT = 1;")
+            self.cursor.execute("ALTER TABLE Participations AUTO_INCREMENT = 1;")
+            self.conn.commit()
+            print("✅ Base de données nettoyée avant le crawl.")
+        except MySQLError as e:
+            print(f"❌ Erreur lors du nettoyage de la BDD: {e}")
+            self.conn.rollback()
 
     def process_item(self, item, spider):
         film_id = self.insert_film(item)

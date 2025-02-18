@@ -40,7 +40,8 @@ def home_page(request):
             # Obtention des prédictions pour chaque film
             films = get_predictions(films)
             # Trier les films par prédiction d'entrées dans l'ordre décroissant
-            films_sorted = sorted(films, key=lambda x: x.get('prediction_entrees', 0), reverse=True)
+            films_sorted = sorted(films, key=lambda x: int(x.get('prediction_entrees', 0)) if str(x.get('prediction_entrees', '0')).isdigit() else 0, reverse=True)
+
             
              # Sélectionner uniquement les dix meilleurs films
             top_ten_films = films_sorted[:10]

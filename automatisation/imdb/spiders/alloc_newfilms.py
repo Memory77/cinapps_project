@@ -50,7 +50,7 @@ class AllocNewfilmsSpider(scrapy.Spider):
         film_item['titre'] = titre
         film_item['duree'] =  response.css('div.meta-body-item.meta-body-info').get()
         film_item['salles'] = response.css('div.buttons-holder span.button span.txt::text').get()
-        film_item['salles'] = response.css('div.meta-body-item.meta-body-info span::text').get()
+        film_item['genre'] = response.css('a.xXx.dark-grey-link::text').get()
         film_item['acteurs'] = acteurs
         film_item['realisateur'] = realisateur
         film_item['date_sortie'] = date_sortie
