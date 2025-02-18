@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+  <!-- home -->
+  <section id="home" class="parallax">
+    <div class="home-des">
+        <div class="home-title wow animated fadeInDown" data-wow-duration="1s" data-wow-delay="1s">
+            <img src="{% static "img/star.png" %}" alt="icon film">
+            <h1>SELECTION DE LA SEMAINE</h1>
+        </div>
+        <div class="salles_dispo">
+          <h1>SALLE A</h1>
+          <h1>SALLE B</h1>
+        </div>
+        <div class="top_films">
+        {% for top in top_two %}
+          <a target="_blank" href={{top.film_url}}><img class="wow animated bounceInUp" data-wow-duration="1s" data-wow-delay=".5s" src={{ top.image }}></a>
+        {% endfor %}
+        </div>
+        <div class="top_films">
+        {% for top in top_two %}
+        <div class="wow animated fadeInRight" data-wow-duration="1s" data-wow-delay="1s">
+          <h2>{{ top.titre }}</h2>
+          <p>Entrées estim. en France : <span class="pred_affiche">{{ top.prediction_entrees }}</span></p>
+          <p>Entrées estim. dans le cinéma : <span class="pred_affiche">{{ top.estimation_entrees_cinema }}</span></p>
+          <p>Estim. audience quotidienne : <span class="pred_affiche">{{ top.estimation_entrees_quot }}</span></p>
+          <p>Estim. recette hebdomadaire : <span class="pred_affiche">{{ top.estimation_recette_hebdo }} euros</span></p>
+       </div>
+        {% endfor %}
+        </div>
+        <div class="chiffre_affaires wow animated fadeInUp" data-wow-duration="1s" data-wow-delay="1s">
+          <h1>Résultat pour la semaine</h1>
+          <p>Chiffre d’affaires : <span class="pred_affiche">{{tab_result.ch_affaires}} euros</span></p>
+          <p>Charge : <span class="pred_affiche">{{tab_result.charge}} euros</span></p>
+          <p>Bénéfice : <span class="pred_affiche">{{tab_result.benefice}} euros</span></p>
+        </div>
+      </div>
+    <div id="films">
+      <div id="films-title" class="wow animated zoomIn" data-wow-duration="1s" data-wow-delay="1s">
+          <img src="{% static "img/clap.png" %}" alt="icon film">
+          <h1>Classement des 10 meilleurs films de la semaine</h1>
+          <div class="content-title-underline"></div>
+      </div>
+      <div id="box-container">
+        <div class="box-content wow animated bounceInLeft">
+          <!--<h1>Classement des 10 meilleurs films de la semaine</h1>-->
+          <div id="box-films">
+            {% for film in films %}
+            <figure class="affiche">
+              <div class="img-affiche"><a target=_blank href={{film.film_url}}><img src={{film.image}} alt="illustration"></a></div>
+              <div class="content-affiche">
+                  <h2 class="title-affiche">{{ film.titre }}</h2>
+                  <p class="des-affiche">Date de sortie : <span class="pred_affiche">{{ film.date_sortie }}</span></p>
+                  <p class="des-affiche">Entrées estimées en France : <span class="pred_affiche">{{ film.prediction_entrees }}</span></p>
+                  <p class="des-affiche">Entrées estimées dans le cinéma : <span class="pred_affiche">{{ film.estimation_entrees_cinema }}</span></p>
+                  <div class="content-title-underline2"></div>
+                  {% comment %} <p class="des-affiche">Réalisateur : <span class="pred_affiche">{{ film.realisateurs|join:", " }}</span></p>
+                  <p class="des-affiche">Acteurs : <span class="pred_affiche">{{ film.acteurs|join:", " }}</span></p> {% endcomment %}
+                  <p class="des-affiche">Distributeur : <span class="pred_affiche">{{ film.studio }}</span></p>
+                  <p class="des-affiche">Genre : <span class="pred_affiche">{{ film.genre }}</span></p>
+                  <p class="des-affiche">Durée : <span class="pred_affiche">{{ film.duree }} minutes</span></p>
+                  <p class="des-affiche">Nationalité : <span class="pred_affiche">{{ film.pays }}</span></p>
+                  <p class="des-affiche"><a target=_blank href={{ film.film_url }}>Lien vers Allociné</a></p>
+              </div>
+            </figure>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock content %}
