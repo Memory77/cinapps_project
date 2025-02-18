@@ -7,6 +7,7 @@ def scoring_casting(film, actors_df):
         if personne in actors_df['name'].values:
             poids_acteur = actors_df.loc[actors_df['name'] == personne, 'coef_personne'].values[0]
             poids_total += poids_acteur
+            print(f"POUR L'ACTEUR : {personne}: {poids_acteur}")
     return poids_total
 
 
@@ -28,6 +29,7 @@ def get_studio_coefficient(studio, conn):
         """, (studio,))
         result = cursor.fetchone()
         return result[0] if result else 0
+        print(f'RESULTAT STUDIOOOOOOOOO : {result}')
     except mysql.connector.Error as e:
         print(f"Erreur lors de l'exécution de la requête SQL: {e}")
         return 0

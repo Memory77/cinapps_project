@@ -19,7 +19,8 @@ def get_mysql_connection():
             user=user,
             password=password,
             host=host,
-            database=database
+            database=database,
+            buffered=True
         )
         
         if conn.is_connected():
@@ -38,14 +39,18 @@ def get_directors_by_film(conn, film_id):
     JOIN films f ON part.id_film = f.id_film
     WHERE f.id_film = %s AND part.role = 'realisateur';
     """
+    cursor = None  # ✅ Déclare cursor ici
     try:
         cursor = conn.cursor(dictionary=True)
         cursor.execute(query, (film_id,))
         directors = cursor.fetchall()
-        cursor.close()
     except mysql.connector.Error as e:
         print(f"Erreur lors de la récupération des réalisateurs: {e}")
+    finally:
+        if cursor:
+            cursor.close()  # ✅ Fermer le curseur même en cas d'erreur
     return directors
+
 
 def get_actors_by_film(conn, film_id):
     actors = []
@@ -56,20 +61,15 @@ def get_actors_by_film(conn, film_id):
     JOIN films f ON part.id_film = f.id_film
     WHERE f.id_film = %s AND part.role = 'acteur';
     """
+    cursor = None
     try:
         cursor = conn.cursor(dictionary=True)
         cursor.execute(query, (film_id,))
         actors = cursor.fetchall()
-        cursor.close()
     except mysql.connector.Error as e:
         print(f"Erreur lors de la récupération des acteurs: {e}")
+    finally:
+        if cursor:
+            cursor.close()  # ✅ Fermer proprement
     return actors
 
-
-# Test de connexion et de récupération des données
-conn = get_mysql_connection()
-if conn:
-    directors = get_directors_by_film(conn, 1)  # Essayer avec un film_id existant
-    print(directors)
-    actors = get_actors_by_film(conn, 1)
-    print(actors)

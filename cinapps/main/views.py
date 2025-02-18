@@ -12,7 +12,7 @@ import requests
 from datetime import datetime, timedelta
 import pandas as pd 
 from .models import PredictionFilm
-#from .functions import scoring_casting, get_studio_coefficient
+from .functions import scoring_casting, get_studio_coefficient
 
 #charger le csv
 actors = pd.read_csv('main/acteurs_coef.csv')
@@ -31,8 +31,8 @@ def home_page(request):
             for film in films:
                 film['acteurs'] = [actor['nom'] for actor in get_actors_by_film(conn, film['id_film'])]
                 film['realisateurs'] = [director['nom'] for director in get_directors_by_film(conn, film['id_film'])]
-                # film['scoring_acteurs_realisateurs'] = scoring_casting(film, actors)
-                # film['coeff_studio'] = get_studio_coefficient(film['studio'], conn)
+                film['scoring_acteurs_realisateurs'] = scoring_casting(film, actors)
+                film['coeff_studio'] = get_studio_coefficient(film['studio'], conn)
 
             cursor.close()
             conn.close()
