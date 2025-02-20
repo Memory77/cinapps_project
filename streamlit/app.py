@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Vérifier et récupérer l'URL de l'API
-URL_API = os.getenv('URL_API', 'http://127.0.0.1:8001/prediction')
+URL_API = os.getenv('URL_API')
 if not URL_API:
     raise ValueError("L'URL de l'API n'est pas définie. Vérifie ton fichier .env")
 
@@ -71,7 +71,7 @@ def get_predictions(film):
         return f"Erreur de requête: {str(e)}"
 
 # Interface Streamlit
-st.title("📽️ Prédiction d'entrées pour les films")
+st.title("📽️ Prédiction d'entrées pour les films la première semaine")
 
 # Récupérer les films
 films = get_films()
