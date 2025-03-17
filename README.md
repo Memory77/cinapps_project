@@ -97,12 +97,54 @@ Le projet est structuré en plusieurs composants clés:
 
 ### Base de données
 
-Le projet supporte à la fois MySQL et SQLite. Pour utiliser MySQL:
 
 1. Créez une base de données MySQL:
-   ```sql
-   CREATE DATABASE cinapps CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
+   `
+
+![image](https://github.com/user-attachments/assets/9c74f04e-fc77-4391-b170-d8c8ae14bd6b)
+
+
+
+
+
+
+
+
+
+
+
+-- Création de la table Films
+CREATE TABLE Films (
+    id_film INT AUTO_INCREMENT PRIMARY KEY,
+    titre VARCHAR(255) NOT NULL,
+    duree INT,
+    salles INT,
+    genre VARCHAR(255),
+    date_sortie DATE,
+    pays VARCHAR(255),
+    studio VARCHAR(255),
+    description TEXT,
+    image VARCHAR(255),
+    budget INT,
+    entrees INT,
+    film_url VARCHAR(255),
+);
+
+-- Création de la table Personnes (Acteurs et Réalisateurs)
+CREATE TABLE Personnes (
+    id_personne INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(255) NOT NULL
+);
+
+-- Création de la table Participations (relations entre films et personnes)
+CREATE TABLE Participations (
+    id_film INT,
+    id_personne INT,
+    role ENUM('acteur', 'realisateur') NOT NULL,
+    PRIMARY KEY (id_film, id_personne, role),
+    FOREIGN KEY (id_film) REFERENCES Films(id_film) ON DELETE CASCADE,
+    FOREIGN KEY (id_personne) REFERENCES Personnes(id_personne) ON DELETE CASCADE
+);
 
 2. Exécutez les migrations Django:
    ```bash
@@ -237,7 +279,7 @@ flowchart TD
 
 ## 👥 Contributeurs
 
-- [Votre Nom](https://github.com/votre-utilisateur)
+- [Deborah S.](https://github.com/Memory77)
 
 ## 📄 Licence
 
