@@ -1,0 +1,9 @@
+fastapi 
+uvicorn 
+sqlmodel 
+mysql-connector-python 
+python-dotenv 
+passlib 
+pyjwt
+python-jose
+python-multipart
