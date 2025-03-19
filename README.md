@@ -11,8 +11,9 @@ Le projet est composé de plusieurs **composants interconnectés** :
 4. **Streamlit** (Interface utilisateur) → Affichage interactif des films et des prédictions.
 5. **Base de données MySQL** → Stockage des films et des utilisateurs.
 
+![image](https://github.com/user-attachments/assets/3167852a-d035-435b-8804-71fe26ed7f86)
+
 ---
-![image](https://github.com/user-attachments/assets/e1f01378-b32a-42c8-ab94-65def34c6a69)
 
 ## 📦 **Installation et configuration**
 
