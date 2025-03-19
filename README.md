@@ -9,7 +9,7 @@ Le projet est composé de plusieurs **composants interconnectés** :
 2. **API CRUD (FastAPI)** → Gestion des films avec authentification via JWT.
 3. **API de Prédiction (FastAPI)** → Prédiction des entrées cinéma basées sur un modèle ML.
 4. **Streamlit** (Interface utilisateur) → Affichage interactif des films et des prédictions.
-5. **Base de données MySQL** → Stockage des films et des utilisateurs.
+5. **Base de données MySQL** → Stockage des films.
 
 ![image](https://github.com/user-attachments/assets/3167852a-d035-435b-8804-71fe26ed7f86)
 
