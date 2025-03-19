@@ -2,93 +2,124 @@ import streamlit as st
 import pandas as pd
 import requests
 import os
-import mysql.connector
 from dotenv import load_dotenv
 
 # Charger les variables d'environnement
 load_dotenv()
 
-# Vérifier et récupérer l'URL de l'API
-URL_API = os.getenv('URL_API')
-if not URL_API:
-    raise ValueError("L'URL de l'API n'est pas définie. Vérifie ton fichier .env")
+# URL des API
+URL_API_CRUD = os.getenv('URL_API_CRUD')  # API CRUD
+URL_API_PRED = os.getenv('URL_API')  # API de prédiction
 
-# Fonction pour récupérer la connexion MySQL
-def get_mysql_connection():
+# 📌 Stocker le token JWT dans Streamlit
+if "access_token" not in st.session_state:
+    st.session_state["access_token"] = None
+
+# 📌 Fonction pour récupérer le token JWT
+def get_access_token(username, password):
+    data = {"username": username, "password": password}
     try:
-        conn = mysql.connector.connect(
-            user=os.getenv('MYSQL_USER'),
-            password=os.getenv('MYSQL_PASSWORD'),
-            host=os.getenv('MYSQL_HOST'),
-            database=os.getenv('MYSQL_DATABASE')
-        )
-        if conn.is_connected():
-            print("✅ Connecté à MySQL")
-            return conn
-    except mysql.connector.Error as e:
-        st.error(f"Erreur de connexion MySQL: {e}")
+        response = requests.post(f"{URL_API_CRUD}/auth/token", data=data)
+        if response.status_code == 200:
+            return response.json().get("access_token")
+        else:
+            st.error("🔴 Identifiants incorrects !")
+            return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"⚠️ Erreur de connexion à l'API : {str(e)}")
         return None
 
-# Fonction pour récupérer les films depuis la base de données
-def get_films():
-    conn = get_mysql_connection()
-    if not conn:
-        return pd.DataFrame()
-    
-    query = """
-        SELECT id_film, titre, duree, pays, studio, salles, date_sortie, budget, genre
-        FROM films
-    """
-    
-    df = pd.read_sql(query, conn)
-    conn.close()
-    return df
+# 📌 Interface Streamlit : Connexion utilisateur
+st.sidebar.title("🔐 Connexion")
+username = st.sidebar.text_input("👤 Nom d'utilisateur")
+password = st.sidebar.text_input("🔑 Mot de passe", type="password")
+login_button = st.sidebar.button("Se connecter")
 
-# Fonction pour faire les prédictions via l'API
+if login_button:
+    token = get_access_token(username, password)
+    if token:
+        st.session_state["access_token"] = token
+        st.sidebar.success("✅ Connexion réussie !")
+
+# 📌 Fonction pour récupérer les films via l’API CRUD
+def get_films_from_api():
+    if not st.session_state["access_token"]:
+        st.error("⚠️ Veuillez vous connecter pour accéder aux films.")
+        return pd.DataFrame()
+
+    headers = {"Authorization": f"Bearer {st.session_state['access_token']}"}
+
+    try:
+        response = requests.get(f"{URL_API_CRUD}/films/", headers=headers)
+        if response.status_code == 200:
+            films = response.json()
+            return pd.DataFrame(films)
+        else:
+            st.error(f"⚠️ Erreur API CRUD : {response.status_code}")
+            return pd.DataFrame()
+    except requests.exceptions.RequestException as e:
+        st.error(f"⚠️ Erreur de requête API CRUD : {str(e)}")
+        return pd.DataFrame()
+
+# 📌 Fonction pour nettoyer et vérifier les valeurs
+def safe_value(value, default):
+    if value is None or pd.isna(value):
+        return default
+    try:
+        return int(value) if isinstance(default, int) else value
+    except ValueError:
+        return default
+
+# 📌 Fonction pour faire les prédictions via l'API de prédiction
 def get_predictions(film):
     headers = {'Content-Type': 'application/json'}
     
-    # Création du payload pour l'API
+    # Vérification et conversion des valeurs
     data = {
-        'budget': film['budget'] if pd.notna(film['budget']) else 25000000,
-        'duree': film['duree'] if pd.notna(film['duree']) else 107,
-        'genre': film['genre'] if pd.notna(film['genre']) else 'missing',
-        'pays': film['pays'] if pd.notna(film['pays']) else 'missing',
-        'salles_premiere_semaine': film['salles'] if pd.notna(film['salles']) else 100,
+        'budget': safe_value(film.get('budget'), 25000000),
+        'duree': safe_value(film.get('duree'), 107),
+        'genre': safe_value(film.get('genre'), 'missing'),
+        'pays': safe_value(film.get('pays'), 'missing'),
+        'salles_premiere_semaine': safe_value(film.get('salles'), 100),
         'scoring_acteurs_realisateurs': 0,
         'coeff_studio': 0,
-        'year': film['date_sortie'].year if pd.notna(film['date_sortie']) else 2024
+        'year': safe_value(film.get('date_sortie', 2024), 2024)  # Vérifier si c'est un nombre
     }
-    
+
+    #print("📤 Données envoyées à l'API de prédiction :", data)  # Debug
+
     try:
-        response = requests.post(URL_API, json=data, headers=headers)
+        response = requests.post(URL_API_PRED, json=data, headers=headers)
         if response.status_code == 200:
             prediction = response.json()
-            return int(prediction['prediction'])
+            return safe_value(prediction.get('prediction'), 0)
         else:
+            print(f"⚠️ Erreur API de prédiction : {response.status_code} - {response.text}")
             return f"Erreur API: {response.status_code}"
     except requests.exceptions.RequestException as e:
         return f"Erreur de requête: {str(e)}"
 
-# Interface Streamlit
-st.title("📽️ Prédiction d'entrées pour les films la première semaine")
+# 📌 Interface principale
+st.title("🎬 Prédiction d'entrées pour les films")
 
-# Récupérer les films
-films = get_films()
+# 🔥 Vérifier si l'utilisateur est connecté avant de récupérer les films
+if st.session_state["access_token"]:
+    films = get_films_from_api()
 
-if films.empty:
-    st.warning("Aucun film trouvé dans la base de données.")
+    if films.empty:
+        st.warning("⚠️ Aucun film trouvé dans la base de données.")
+    else:
+        # Appliquer la prédiction sur chaque film
+        films["prediction_entrees"] = films.apply(get_predictions, axis=1)
+
+        # Trier les films par nombre d'entrées décroissant
+        films_sorted = films.sort_values(by="prediction_entrees", ascending=False)
+
+        # 🔥 Affichage des films avec prédictions
+        st.write("🎬 **Top Films avec prédictions**")
+        st.dataframe(films_sorted)
+
+        # 🔥 Graphique des prédictions
+        st.bar_chart(films_sorted.set_index("titre")["prediction_entrees"])
 else:
-    # Appliquer la prédiction sur chaque film
-    films["prediction_entrees"] = films.apply(get_predictions, axis=1)
-    
-    # Trier les films par nombre de prédictions décroissant
-    films_sorted = films.sort_values(by="prediction_entrees", ascending=False)
-    
-    # Affichage du tableau des films
-    st.write("🎬 **Top Films avec prédictions**")
-    st.dataframe(films_sorted)
-
-    # Graphique des prédictions
-    st.bar_chart(films_sorted.set_index("titre")["prediction_entrees"])
-
+    st.warning("⚠️ Veuillez vous connecter pour afficher les films et les prédictions.")

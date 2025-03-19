@@ -63,3 +63,6 @@ def prediction_root(feature_input: FeaturesInput):
 # @app.post("/prediction/")
 # async def prediction (data: FeaturesInput):
 #     score_acteurs_realisateur = calcul_poids_total(data)
+
+
+#uvicorn main:app --host 0.0.0.0 --port 8001 --reload

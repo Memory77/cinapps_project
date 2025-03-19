@@ -14,3 +14,5 @@ app = FastAPI(
 # 🔄 Inclusion des routes
 app.include_router(auth.router, tags=["Auth"])
 app.include_router(films.router, tags=["Films"])
+
+#uvicorn app.main:app --reload
