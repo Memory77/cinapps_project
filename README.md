@@ -1,286 +1,182 @@
-# CinApps
+# Cinapps Project
 
-CinApps est une plateforme d'analyse cinématographique conçue pour prédire les performances au box-office des films. Ce projet combine le web scraping, l'apprentissage automatique et une interface web conviviale pour aider les exploitants de cinéma à prendre des décisions basées sur les données.
+## 🚀 Introduction
+Cinapps est une application permettant de prédire les entrées en salle de cinéma pour un film donné. 
 
-![CinApps Logo](https://via.placeholder.com/150)
+### 🔹 **Architecture du projet**
+Le projet est composé de plusieurs **composants interconnectés** :
+1. **Django** (Back-end principal) → Interface et gestion des prédictions.
+2. **API CRUD (FastAPI)** → Gestion des films avec authentification via JWT.
+3. **API de Prédiction (FastAPI)** → Prédiction des entrées cinéma basées sur un modèle ML.
+4. **Streamlit** (Interface utilisateur) → Affichage interactif des films et des prédictions.
+5. **Base de données MySQL** → Stockage des films et des utilisateurs.
 
-## 📋 Table des matières
+---
 
-- [Aperçu du projet](#aperçu-du-projet)
-- [Architecture](#architecture)
-- [Fonctionnalités](#fonctionnalités)
-- [Technologies utilisées](#technologies-utilisées)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Utilisation](#utilisation)
-- [Structure du projet](#structure-du-projet)
-- [API](#api)
-- [Modèle ML](#modèle-ml)
-- [Contributeurs](#contributeurs)
-- [Licence](#licence)
+## 📦 **Installation et configuration**
 
-## 🔍 Aperçu du projet
+### **1️⃣ Prérequis**
+- **Python 3.10+**
+- **MySQL** 
+  
 
-CinApps est une solution complète qui permet aux exploitants de cinéma de prédire le succès potentiel des films à l'affiche. Le système collecte automatiquement des données sur les films à venir, utilise un modèle d'apprentissage automatique pour prédire les entrées en salle, et présente ces informations via une interface web intuitive.
-
-```mermaid
-graph TD
-    A[Web Scraping] -->|Données des films| B[Base de données]
-    B -->|Données d'entraînement| C[Modèle ML]
-    C -->|Modèle de prédiction| D[API]
-    B -->|Informations des films| E[Application Web Django]
-    E -->|Requête de prédiction| D
-    D -->|Prédictions| E
-    F[Dashboard Streamlit] -->|Requête de prédiction| D
-    D -->|Prédictions| F
+### **2️⃣ Cloner le projet**
+```bash
+git clone https://github.com/Memory77/cinapps_project.git
+cd cinapps_project
 ```
 
-## 🏗️ Architecture
+### **3️⃣ Configurer les variables d'environnement**
+Créer un fichier `.env` à la racine et ajouter :
+```ini
+# MySQL Database
+MYSQL_USER="db_user"
+MYSQL_PASSWORD="user_mdp"
+MYSQL_HOST="127.0.0.1"
+MYSQL_DATABASE="db_name"
 
-Le projet est structuré en plusieurs composants clés:
+# URLs des API
+URL_API_CRUD="http://127.0.0.1:8000"
+URL_API_PREDICTION="http://127.0.0.1:8001"
+```
 
-1. **Web Scraping (automatisation)**: Collecte des données de films depuis Allocine
-2. **Machine Learning (ML)**: Entraîne et évalue les modèles de prédiction
-3. **Service API (API_s)**: Fournit des prédictions via un endpoint FastAPI
-4. **Application Web (cinapps)**: Interface utilisateur basée sur Django
-5. **Dashboard (streamlit)**: Visualisation alternative basée sur Streamlit
+### **4️⃣ Installer les dépendances**
+```bash
+# Installer les dépendances pour Django
+cd cinapps
+pip install -r requirements.txt
 
-## ✨ Fonctionnalités
+# Installer les dépendances pour l'API CRUD
+cd ../cinapps_api
+pip install -r requirements.txt
 
-- **Collecte automatique de données**: Scraping des informations sur les films à venir
-- **Prédiction du box-office**: Prédiction ML des performances des films
-- **Classement des films**: Tri des films par performance prédite
-- **Analyse financière**: Estimation des revenus et des bénéfices
-- **Authentification utilisateur**: Accès sécurisé à la plateforme
-- **Dashboard interactif**: Visualisation des prédictions et des données
+# Installer les dépendances pour Streamlit
+cd ../streamlit
+pip install -r requirements.txt
+```
 
-## 🛠️ Technologies utilisées
+---
 
-| Composant | Technologies |
-|-----------|-------------|
-| Web Scraping | Scrapy, Python |
-| Base de données | MySQL, SQLite |
-| Machine Learning | scikit-learn, CatBoost, pandas |
-| API | FastAPI |
-| Application Web | Django, Bootstrap |
-| Dashboard | Streamlit |
-| Déploiement | Docker |
+## 🎬 **Lancer les services**
 
-## 📥 Installation
+### **1️⃣ Démarrer la base de données**
+```bash
+sudo systemctl start mysql  # Ou `mariadb` selon votre système
+```
 
-1. **Cloner le dépôt**
-   ```bash
-   git clone https://github.com/votre-utilisateur/cinapps.git
-   cd cinapps
-   ```
+### **2️⃣ Démarrer l’API CRUD (FastAPI)**
+```bash
+cd cinapps_api
+uvicorn app.main:app --reload
+```
+- Accès à la documentation Swagger : [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-2. **Installer les dépendances**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### **3️⃣ Démarrer l’API de Prédiction**
+```bash
+cd cinapps_prediction
+uvicorn app.main:app --reload
+```
+- Accès aux endpoints de prédiction sur : [http://127.0.0.1:8001](http://127.0.0.1:8001)
 
-3. **Configurer les variables d'environnement**
-   Créez un fichier `.env` à la racine du projet avec les variables suivantes:
-   ```
-   SECRET_KEY=votre_clé_secrète
-   DEBUG=1
-   MYSQL_USER=utilisateur_mysql
-   MYSQL_PASSWORD=mot_de_passe_mysql
-   MYSQL_HOST=localhost
-   MYSQL_PORT=3306
-   MYSQL_DATABASE=cinapps
-   MYSQL_RDY=1
-   URL_API=http://localhost:8000/prediction/
-   ```
-
-## ⚙️ Configuration
-
-### Base de données
-
-
-1. Créez une base de données MySQL:
-   `
-
-![image](https://github.com/user-attachments/assets/9c74f04e-fc77-4391-b170-d8c8ae14bd6b)
-
-
-
-
-
-
-
-
-
-
-
--- Création de la table Films
-CREATE TABLE Films (
-    id_film INT AUTO_INCREMENT PRIMARY KEY,
-    titre VARCHAR(255) NOT NULL,
-    duree INT,
-    salles INT,
-    genre VARCHAR(255),
-    date_sortie DATE,
-    pays VARCHAR(255),
-    studio VARCHAR(255),
-    description TEXT,
-    image VARCHAR(255),
-    budget INT,
-    entrees INT,
-    film_url VARCHAR(255),
-);
-
--- Création de la table Personnes (Acteurs et Réalisateurs)
-CREATE TABLE Personnes (
-    id_personne INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(255) NOT NULL
-);
-
--- Création de la table Participations (relations entre films et personnes)
-CREATE TABLE Participations (
-    id_film INT,
-    id_personne INT,
-    role ENUM('acteur', 'realisateur') NOT NULL,
-    PRIMARY KEY (id_film, id_personne, role),
-    FOREIGN KEY (id_film) REFERENCES Films(id_film) ON DELETE CASCADE,
-    FOREIGN KEY (id_personne) REFERENCES Personnes(id_personne) ON DELETE CASCADE
-);
-
-2. Exécutez les migrations Django:
-   ```bash
-   cd cinapps
-   python manage.py migrate
-   ```
-
-### Modèle ML
-
-Le modèle ML est préentraîné et disponible dans le dossier `ML/model.pkl`. Pour réentraîner le modèle:
-
-1. Exécutez le notebook Jupyter:
-   ```bash
-   cd ML
-   jupyter notebook modelisation.ipynb
-   ```
-
-## 🚀 Utilisation
-
-### Démarrer l'application Django
-
+### **4️⃣ Démarrer Django**
 ```bash
 cd cinapps
 python manage.py runserver
 ```
-L'application sera accessible à l'adresse http://localhost:8000
+- L’application est accessible sur : [http://127.0.0.1:8002](http://127.0.0.1:8002)
 
-### Démarrer l'API
-
-```bash
-cd API_s
-uvicorn main:app --reload
-```
-L'API sera accessible à l'adresse http://localhost:8000/prediction/
-
-### Démarrer le dashboard Streamlit
-
+### **5️⃣ Démarrer Streamlit**
 ```bash
 cd streamlit
 streamlit run app.py
 ```
-Le dashboard sera accessible à l'adresse http://localhost:8501
+- L’interface utilisateur est accessible sur : [http://127.0.0.1:8501](http://127.0.0.1:8501)
 
-### Exécuter le scraper
+---
 
-```bash
-cd automatisation
-scrapy crawl alloc_newfilms -o data.json
-```
+## 🔑 **Authentification & JWT**
+- **Authentification via l’API CRUD**
+- Pour obtenir un **access token**, utilisez l’endpoint `/auth/token` en envoyant `{ "username": "user", "password": "pass" }`
+- Utilisez ce token pour accéder aux films : **`Authorization: Bearer <TOKEN>`**
 
-## 📁 Structure du projet
+---
 
-```
-cinapps_project/
-├── API_s/                  # Service API FastAPI
-│   ├── main.py             # Application FastAPI
-│   ├── model_utils.py      # Utilitaires pour le modèle
-│   └── model.pkl           # Modèle sérialisé
-├── ML/                     # Composant Machine Learning
-│   ├── modelisation.ipynb  # Notebook d'entraînement
-│   └── model.pkl           # Modèle entraîné
-├── automatisation/         # Composant de scraping
-│   └── imdb/
-│       └── spiders/        # Spiders Scrapy
-├── cinapps/                # Application Django
-│   ├── accounts/           # App d'authentification
-│   ├── functionalities/    # App de fonctionnalités
-│   ├── main/               # App principale
-│   └── templates/          # Templates HTML
-└── streamlit/              # Dashboard Streamlit
-    └── app.py              # Application Streamlit
-```
+## 🔗 **API CRUD : Endpoints principaux**
 
-## 🔌 API
+### **📝 CRUD sur les films**
+| Méthode | Endpoint        | Description |
+|---------|----------------|-------------|
+| `GET`   | `/films/`      | Liste des films (nécessite un JWT) |
+| `POST`  | `/films/`      | Ajouter un film (JWT requis) |
+| `PUT`   | `/films/{id}`  | Mettre à jour un film (JWT requis) |
+| `DELETE`| `/films/{id}`  | Supprimer un film (JWT requis) |
 
-L'API expose un endpoint pour les prédictions:
+### **🔐 Authentification**
+| Méthode | Endpoint     | Description |
+|---------|-------------|-------------|
+| `POST`  | `/auth/token` | Obtenir un token JWT |
+| `GET`   | `/users/me/`  | Récupérer l’utilisateur connecté |
 
-- **POST** `/prediction/`: Accepte les caractéristiques d'un film et retourne une prédiction de box-office
+---
 
-Exemple de requête:
+## 🔮 **API de Prédiction : Endpoints principaux**
+
+| Méthode | Endpoint        | Description |
+|---------|----------------|-------------|
+| `POST`  | `/prediction/` | Envoi des caractéristiques d’un film pour obtenir une prédiction |
+
+Exemple de requête :
 ```json
 {
-  "budget": 25000000,
+  "budget": 50000000,
   "duree": 120,
   "genre": "Action",
-  "pays": "France",
-  "salles_premiere_semaine": 300,
-  "scoring_acteurs_realisateurs": 5.2,
-  "coeff_studio": 2,
-  "year": 2023
+  "pays": "USA",
+  "salles_premiere_semaine": 350,
+  "scoring_acteurs_realisateurs": 0.8,
+  "coeff_studio": 1.2,
+  "year": 2024
 }
 ```
 
-Exemple de réponse:
-```json
-{
-  "prediction": 150000
-}
-```
+---
 
-## 🧠 Modèle ML
+## **📊 Flux de données**
+1. **L'utilisateur se connecte** et récupère un **token JWT** depuis l'API CRUD.
+2. **L'API CRUD récupère les films** dans la base MySQL et les envoie à **Streamlit**.
+3. **Streamlit affiche les films** et les envoie à l'**API de prédiction**.
+4. **L’API de prédiction** renvoie une estimation des entrées pour chaque film.
+5. **Les résultats sont affichés** dans **Streamlit** sous forme de **tableau et graphique**.
 
-Le modèle utilise les caractéristiques suivantes pour prédire les entrées au box-office:
+---
 
-- Budget du film
-- Durée
-- Genre
-- Pays de production
-- Nombre de salles
-- Score des acteurs/réalisateurs
-- Coefficient du studio
-- Année de sortie
+## 📚 **Technologies utilisées**
+- **Django** (Back-end principal)
+- **FastAPI** (API CRUD + API de prédiction)
+- **Streamlit** (Interface utilisateur)
+- **MySQL** (Base de données)
+- **JWT** (Authentification sécurisée)
+- **Pandas, NumPy, Scikit-Learn** (Traitement des données et ML)
 
-```mermaid
-flowchart TD
-    A[Caractéristiques d'entrée] --> B[Modèle CatBoost]
-    B --> C[Prédiction d'entrées]
-    
-    subgraph Caractéristiques
-    D[Budget]
-    E[Durée]
-    F[Genre]
-    G[Pays]
-    H[Salles]
-    I[Score Acteurs/Réalisateurs]
-    J[Coefficient Studio]
-    K[Année]
-    end
-    
-    Caractéristiques --> A
-```
+---
 
-## 👥 Contributeurs
+## 🛠️ **Développement et Contribution**
+1. **Forker le repo**
+2. **Créer une branche** : `git checkout -b feature-nouvelle-fonctionnalité`
+3. **Faire des modifications et commit** : `git commit -m "Ajout d'une nouvelle fonctionnalité"`
+4. **Pusher sur GitHub** : `git push origin feature-nouvelle-fonctionnalité`
+5. **Créer une Pull Request**
 
-- [Deborah S.](https://github.com/Memory77)
+---
 
-## 📄 Licence
+## 🔥 **TODO et améliorations possibles**
+- ✅ Ajouter un **système d’authentification complet**
+- ✅ Intégrer une **base de données propre**
+- 🔲 Améliorer l’interface **Streamlit** (filtres, affichage des détails…)
+- 🔲 Optimiser les **requêtes vers l’API de prédiction**
+- 🔲 Ajouter **des tests unitaires**
 
-Ce projet est sous licence [MIT](LICENSE). 
+---
+
+## 🏆 **Crédits et remerciements**
+Projet réalisé par **Memory77** et contributeurs ✨.
