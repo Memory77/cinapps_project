@@ -12,6 +12,7 @@ Le projet est composé de plusieurs **composants interconnectés** :
 5. **Base de données MySQL** → Stockage des films et des utilisateurs.
 
 ---
+![image](https://github.com/user-attachments/assets/e1f01378-b32a-42c8-ab94-65def34c6a69)
 
 ## 📦 **Installation et configuration**
 
