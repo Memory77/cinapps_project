@@ -63,6 +63,41 @@ pip install -r requirements.txt
 ```bash
 sudo systemctl start mysql  # Ou `mariadb` selon votre système
 ```
+-- Création de la table Films
+CREATE TABLE Films (
+    id_film INT AUTO_INCREMENT PRIMARY KEY,
+    titre VARCHAR(255) NOT NULL,
+    duree INT,
+    salles INT,
+    genre VARCHAR(255),
+    date_sortie DATE,
+    pays VARCHAR(255),
+    studio VARCHAR(255),
+    description TEXT,
+    image VARCHAR(255),
+    budget INT,
+    entrees INT,
+    film_url VARCHAR(255),
+);
+
+-- Création de la table Personnes (Acteurs et Réalisateurs)
+CREATE TABLE Personnes (
+    id_personne INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(255) NOT NULL
+);
+
+![image](https://github.com/user-attachments/assets/fdebdcb1-513f-40cd-998f-5f1e0bd64a1f)
+
+-- Création de la table Participations (relations entre films et personnes)
+CREATE TABLE Participations (
+    id_film INT,
+    id_personne INT,
+    role ENUM('acteur', 'realisateur') NOT NULL,
+    PRIMARY KEY (id_film, id_personne, role),
+    FOREIGN KEY (id_film) REFERENCES Films(id_film) ON DELETE CASCADE,
+    FOREIGN KEY (id_personne) REFERENCES Personnes(id_personne) ON DELETE CASCADE
+);
+
 
 ### **2️⃣ Démarrer l’API CRUD (FastAPI)**
 ```bash
