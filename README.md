@@ -61,7 +61,7 @@ pip install -r requirements.txt
 
 ### **1️⃣ Démarrer la base de données**
 ```bash
-sudo systemctl start mysql  # Ou `mariadb` selon votre système
+sudo systemctl start mysql  
 ```
 -- Création de la table Films
 CREATE TABLE Films (
