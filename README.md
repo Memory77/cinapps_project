@@ -86,7 +86,6 @@ CREATE TABLE Personnes (
     nom VARCHAR(255) NOT NULL
 );
 
-![image](https://github.com/user-attachments/assets/fdebdcb1-513f-40cd-998f-5f1e0bd64a1f)
 
 -- Création de la table Participations (relations entre films et personnes)
 CREATE TABLE Participations (
@@ -98,6 +97,7 @@ CREATE TABLE Participations (
     FOREIGN KEY (id_personne) REFERENCES Personnes(id_personne) ON DELETE CASCADE
 );
 
+![image](https://github.com/user-attachments/assets/fdebdcb1-513f-40cd-998f-5f1e0bd64a1f)
 
 ### **2️⃣ Démarrer l’API CRUD (FastAPI)**
 ```bash
