@@ -2,67 +2,64 @@ from itemadapter import ItemAdapter
 import re
 from scrapy.exceptions import DropItem
 from datetime import datetime
-import os
+import logging
+from parsel import Selector  # Scrapy utilise Parsel pour le parsing HTML
 
 class NewFilmsPipeline:
     def process_item(self, item, spider):
+        logging.info(f"✅ Avant nettoyage : {item}")
 
+         # ✅ Extraction du premier genre uniquement
+        if "duree" in item and isinstance(item["duree"], str):
+            selector = Selector(text=item["duree"])
+            genres = selector.css("span.dark-grey-link::text").getall()
+            item["genre"] = genres[0] if genres else None  # Prend uniquement le premier genre
+            
+        # Nettoyage général des valeurs vides
         for key in list(item.keys()):
-        # Vérifier si la valeur associée à la clé est un tiret
             if item[key] == '-' or item[key] == []:
-                # Remplacer par None si c'est le cas
                 item[key] = None
 
+        # Nettoyage des champs spécifiques
         item['date_sortie'] = self.convert_date(item.get('date_sortie', ''))
-        
-
-        # Nettoyer et convertir la durée en minutes
         item['duree'] = self.clean_duration(item.get('duree', ''))
-
-        # Convertir les entrées en un entier, ne rien faire si 'entrees' n'existe pas
+        
         if 'entrees' in item:
             item['entrees'] = self.convert_entrees(item['entrees'])
 
         if 'budget' in item:
             item['budget'] = self.convert_entrees(item['budget'])
 
-        # Nettoyer la description
         item['description'] = self.clean_text(item.get('description', ''))
-
-        
-        # Nettoyer le champ pays
         item['pays'] = item.get('pays', '').strip()
         
-        if item['studio']:
-            item['studio'] = item.get('studio', '').strip()
-        
+        if item.get('studio'):
+            item['studio'] = item['studio'].strip()
 
-        #nettoyer anecdotes
-        if item['anecdotes']:
-            item['anecdotes'] = item.get('anecdotes', '').strip()
+        # ✅ Nettoyage du champ "anecdotes"
+        if item.get('anecdotes'):
+            item['anecdotes'] = item['anecdotes'].strip()
             premiere_lettre = item['anecdotes'][0]
             item['anecdotes'] = int(premiere_lettre)
 
-        #nettoyer budget
-        # Extraire uniquement le nombre de séances, s'il existe
+        # ✅ Extraction du nombre de salles
         if 'salles' in item:
             item['salles'] = self.extract_sessions(item['salles'])
-        #nettoyer le champ realisateur 
-        if item['realisateur']:
-            premiere_valeur = item['realisateur'][0]
-            if premiere_valeur == 'De':
+
+        # ✅ Nettoyage des champs "réalisateur" et "acteurs"
+        if item.get('realisateur'):
+            if item['realisateur'][0] == 'De':
                 item['realisateur'].pop(0)
-        #nettoyer le champ acteur
-        if item['acteurs']:
-            premiere_valeur = item['acteurs'][0]
-            if premiere_valeur == 'Avec':
+
+        if item.get('acteurs'):
+            if item['acteurs'][0] == 'Avec':
                 item['acteurs'].pop(0)
-        
+
+        logging.info(f"✅ Après nettoyage : {item}")
         return item
-    
-   
+
+    # 🔹 Nettoyage de la durée (conversion en minutes)
     def clean_duration(self, duration_html):
-        # Extrait la durée en minutes à partir du HTML ou retourne None si non trouvable
         if duration_html:
             match = re.search(r'(\d+)h\s*(\d+)min', duration_html)
             if match:
@@ -70,8 +67,8 @@ class NewFilmsPipeline:
                 return int(hours) * 60 + int(minutes)
         return None
 
+    # 🔹 Conversion du nombre d'entrées en int
     def convert_entrees(self, entrees):
-        # Convertit les entrées en int, gère si 'entrees' est déjà un int ou None
         if entrees is None:
             return None
         if isinstance(entrees, int):
@@ -80,30 +77,25 @@ class NewFilmsPipeline:
             return int(re.sub(r'\D', '', entrees))
         return None
 
+    # 🔹 Suppression des espaces inutiles dans les descriptions
     def clean_text(self, text):
-        # Supprime les espaces superflus dans un texte
         return re.sub(r'\s+', ' ', text).strip()
 
-   
+    # 🔹 Extraction du nombre de salles
     def extract_sessions(self, salles):
-        # Si 'salles' est déjà un entier, rien à faire
         if isinstance(salles, int):
             return salles
-        # Si 'salles' est une chaîne, essayer d'extraire le nombre
         elif isinstance(salles, str):
             match = re.search(r'\d+', salles)
-            if match:
-                return int(match.group(0))  # Convertir le nombre trouvé en entier
-        # Si aucun des cas précédents, retourner None ou une valeur par défaut
+            return int(match.group(0)) if match else None
         return None
 
- 
+    # 🔹 Conversion de la date en format ISO "YYYY-MM-DD"
     def convert_date(self, date_str):
-        # Conversion de la date du format '3 avril 2024' au format ISO '2024-04-03'
         try:
             return datetime.strptime(date_str, '%d %B %Y').strftime('%Y-%m-%d')
         except ValueError:
-            # Tentez une conversion en supposant le français pour le nom du mois
+            # Gestion des noms de mois en français
             french_to_english = {
                 'janvier': 'January', 'février': 'February', 'mars': 'March', 'avril': 'April',
                 'mai': 'May', 'juin': 'June', 'juillet': 'July', 'août': 'August',
@@ -116,9 +108,9 @@ class NewFilmsPipeline:
             try:
                 return datetime.strptime(date_str, '%d %B %Y').strftime('%Y-%m-%d')
             except ValueError:
-                # Si la conversion échoue, retourner la chaîne originale ou une valeur par défaut
-                return date_str
-            
+                return date_str  # Retourne la valeur d'origine si la conversion échoue
+
+
 import mysql.connector
 from mysql.connector import Error as MySQLError
 from scrapy.exceptions import NotConfigured
