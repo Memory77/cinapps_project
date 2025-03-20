@@ -14,7 +14,7 @@ class NewFilmsPipeline:
             selector = Selector(text=item["duree"])
             genres = selector.css("span.dark-grey-link::text").getall()
             item["genre"] = genres[0] if genres else None  # Prend uniquement le premier genre
-            
+
         # Nettoyage général des valeurs vides
         for key in list(item.keys()):
             if item[key] == '-' or item[key] == []:
@@ -50,6 +50,9 @@ class NewFilmsPipeline:
         if item.get('realisateur'):
             if item['realisateur'][0] == 'De':
                 item['realisateur'].pop(0)
+            item["realisateur"] = item["realisateur"][0] if item["realisateur"] else None
+
+
 
         if item.get('acteurs'):
             if item['acteurs'][0] == 'Avec':
