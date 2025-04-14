@@ -139,3 +139,6 @@ class DecimalEncoder(json.JSONEncoder):
 # performances ou le fonctionnement de vos vues Django, sauf si vous avez configuré quelque chose pour que les 
 #vues interagissent avec les résultats de cette tâche.
 #Non-liée aux requêtes des utilisateurs : Les utilisateurs qui accèdent à votre site ne déclenchent pas cette tâche. Ils verront simplement les résultats (par exemple, les films et les prédictions) qui ont été générés et sauvegardés lors de la dernière exécution de la tâche.
+
+
+#python manage.py runserver localhost:8002
