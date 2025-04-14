@@ -64,8 +64,8 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   "imdb.pipelines.NewFilmsPipeline": 300,
-   'imdb.pipelines.MySQLStorePipeline': 800,
+    "imdb.pipelines.NewFilmsPipeline": 300,
+    'imdb.pipelines.MySQLStorePipeline': 800,
 }
 MYSQL_USER = 'cinapps_user'
 MYSQL_PASSWORD = 'cinapps888'
