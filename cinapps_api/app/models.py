@@ -28,3 +28,15 @@ class User(SQLModel, table=True):
     username: str = Field(index=True)
     password: str  # Contient déjà le mot de passe haché
 
+class Personne(SQLModel, table=True):
+    __tablename__ = "Personnes"
+
+    id_personne: Optional[int] = Field(default=None, primary_key=True)
+    nom: str
+
+class Participation(SQLModel, table=True):
+    __tablename__ = "Participations"
+
+    id_film: int = Field(foreign_key="films.id_film", primary_key=True)
+    id_personne: int = Field(foreign_key="Personnes.id_personne", primary_key=True)
+    role: str  # 'acteur' ou 'realisateur'
