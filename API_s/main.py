@@ -28,10 +28,8 @@ class PredictionOutput(BaseModel):
 def prediction_root(feature_input: FeaturesInput):
     F1 = feature_input.budget
     F2 = feature_input.duree
-    #F3 = feature_input.franchise
     F4 = feature_input.genre
     F5 = feature_input.pays
-    #F6 = feature_input.remake
     F7 = feature_input.salles_premiere_semaine
     F8 = feature_input.scoring_acteurs_realisateurs
     F9 = feature_input.coeff_studio

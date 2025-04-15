@@ -1,35 +1,85 @@
-import requests
 import os
+import requests
 
-API_URL = os.getenv('API_CRUD_URL')
+def get_api_token():
+    url = f"{os.getenv('API_CRUD_URL')}/auth/token"
+    username = os.getenv("API_CRUD_USERNAME")
+    password = os.getenv("API_CRUD_PASSWORD")
 
-def get_token_from_request(request):
-    token = request.session.get("api_token")
+    try:
+        response = requests.post(url, data={
+            "username": username,
+            "password": password
+        })
+
+        if response.status_code == 200:
+            return response.json()["access_token"]
+        else:
+            print(f"❌ Erreur token: {response.status_code} - {response.text}")
+            return None
+
+    except requests.RequestException as e:
+        print(f"❌ Exception lors de l'obtention du token: {e}")
+        return None
+
+
+def get_films_from_api():
+    token = get_api_token()
     if not token:
-        raise Exception("Token API manquant dans la session utilisateur.")
-    return token
-
-def get_films(request):
-    token = get_token_from_request(request)
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get(f"{API_URL}/films/", headers=headers)
-    response.raise_for_status()
-    return response.json()
-
-def get_acteurs(request, film_id):
-    token = get_token_from_request(request)
-    headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get(f"{API_URL}/films/{film_id}/acteurs/", headers=headers)
-    if response.status_code == 404:
         return []
-    response.raise_for_status()
-    return response.json()
 
-def get_realisateurs(request, film_id):
-    token = get_token_from_request(request)
+    url = f"{os.getenv('API_CRUD_URL')}/films/"
     headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get(f"{API_URL}/films/{film_id}/realisateurs/", headers=headers)
-    if response.status_code == 404:
+
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"❌ Erreur films: {response.status_code} - {response.text}")
+            return []
+    except requests.RequestException as e:
+        print(f"❌ Exception lors de la récupération des films: {e}")
         return []
-    response.raise_for_status()
-    return response.json()
+
+
+def get_acteurs_by_film_api(film_id):
+    token = get_api_token()
+    if not token:
+        return []
+
+    url = f"{os.getenv('API_CRUD_URL')}/films/{film_id}/acteurs/"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            return [a['nom'] for a in data]
+        else:
+            print(f"❌ Erreur acteurs pour film {film_id}: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"❌ Exception acteurs: {e}")
+        return []
+
+
+def get_realisateurs_by_film_api(film_id):
+    token = get_api_token()
+    if not token:
+        return []
+
+    url = f"{os.getenv('API_CRUD_URL')}/films/{film_id}/realisateurs/"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            return [r['nom'] for r in data]
+        else:
+            print(f"❌ Erreur réalisateurs pour film {film_id}: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"❌ Exception réalisateurs: {e}")
+        return []

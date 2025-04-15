@@ -1,118 +1,126 @@
 from django.shortcuts import render
-# from .functions import scoring_casting, get_studio_coefficient
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect
-from requests import Request, Session
-from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 import os
 import json
-import mysql.connector
-from .database import get_mysql_connection, get_actors_by_film, get_directors_by_film
+import pandas as pd
 import requests
-from datetime import datetime, timedelta
-import pandas as pd 
+from datetime import datetime
+from decimal import Decimal
 from .models import PredictionFilm
 from .functions import scoring_casting, get_studio_coefficient
+from .services import get_films_from_api, get_acteurs_by_film_api, get_realisateurs_by_film_api
 
-#charger le csv
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return super().default(obj)
+
+
+# Charger le CSV une seule fois
 actors = pd.read_csv('main/acteurs_coef.csv')
 
-@login_required
+
 def home_page(request):
-    conn = get_mysql_connection()
-    if conn:
-        try:
-            cursor = conn.cursor(dictionary=True)
-            query = "SELECT id_film, titre, studio, description, image, film_url, date_sortie, genre, salles, pays, duree, budget FROM films WHERE is_pred = %s"
-            cursor.execute(query, (0,))
-            films = cursor.fetchall()
+    # 1. Récupérer les films depuis l’API CRUD
+    films = get_films_from_api()
 
+    for film in films:
+        # 2. Ajouter acteurs et réalisateurs
+        film['acteurs'] = get_acteurs_by_film_api(film['id_film'])
+        film['realisateurs'] = get_realisateurs_by_film_api(film['id_film'])
 
-            for film in films:
-                film['acteurs'] = [actor['nom'] for actor in get_actors_by_film(conn, film['id_film'])]
-                film['realisateurs'] = [director['nom'] for director in get_directors_by_film(conn, film['id_film'])]
-                film['scoring_acteurs_realisateurs'] = scoring_casting(film, actors)
-                film['coeff_studio'] = get_studio_coefficient(film['studio'], conn)
+        # 3. Calcul du scoring et du coefficient studio
+        film['scoring_acteurs_realisateurs'] = scoring_casting(film, actors)
+        film['coeff_studio'] = get_studio_coefficient(film['studio'])
 
-            cursor.close()
-            conn.close()
+    # 4. Lancer les prédictions
+    films = get_predictions(films)
 
-            # Obtention des prédictions pour chaque film
-            films = get_predictions(films)
-            # Trier les films par prédiction d'entrées dans l'ordre décroissant
-            films_sorted = sorted(films, key=lambda x: int(x.get('prediction_entrees', 0)) if str(x.get('prediction_entrees', '0')).isdigit() else 0, reverse=True)
+    # 5. Trier les films selon prédiction décroissante
+    films_sorted = sorted(
+        films,
+        key=lambda x: int(x.get('prediction_entrees', 0)) if str(x.get('prediction_entrees', '0')).isdigit() else 0,
+        reverse=True
+    )
 
-            
-             # Sélectionner uniquement les dix meilleurs films
-            top_ten_films = films_sorted[:10]
-            
-            # Sélectionner uniquement les deux premiers
-            top_two_films = films_sorted[:2]
-            
-            #chiffre d'affaire
-            ch_affaires = sum(film['estimation_recette_hebdo'] for film in top_two_films)
-            charge = 4900
-            benefice = ch_affaires - charge
+    # 6. Top 10 + Top 2 pour bénéfice
+    top_ten_films = films_sorted[:10]
+    top_two_films = films_sorted[:2]
 
-            tab_result = {
-                'ch_affaires':ch_affaires,
-                'charge':charge,
-                'benefice': benefice
-            }
+    ch_affaires = sum(film['estimation_recette_hebdo'] for film in top_two_films)
+    charge = 4900
+    benefice = ch_affaires - charge
 
-            return render(request, "main/home_page.html", {"films": top_ten_films, "top_two": top_two_films, "tab_result":tab_result })
-        except mysql.connector.Error as e:
-            print(f"Erreur lors de l'exécution de la requête SQL: {e}")
-            return render(request, 'main/home_page.html', {"error": str(e)})
-    else:
-        print("La connexion à la base de données n'a pas été établie avec succès.")
-        return render(request, 'main/home_page.html', {"error": "Connexion à la base de données échouée."})
+    tab_result = {
+        'ch_affaires': ch_affaires,
+        'charge': charge,
+        'benefice': benefice
+    }
+
+    return render(request, "main/home_page.html", {
+        "films": top_ten_films,
+        "top_two": top_two_films,
+        "tab_result": tab_result
+    })
 
 
 def get_predictions(films):
-    url = os.getenv('URL_API') # Ajustez l'URL si nécessaire
+    url = os.getenv('URL_API')
     headers = {'Content-Type': 'application/json'}
 
-    # Prépare les données pour l'API
     for film in films:
-        #print(film)
+        # Conversion date_sortie pour extraire l’année
+        try:
+            year = datetime.strptime(film['date_sortie'], "%Y-%m-%d").year if film['date_sortie'] else None
+        except Exception as e:
+            print(f"❌ Erreur parsing date_sortie pour {film['titre']} : {e}")
+            year = None
+
         data = {
-            'budget': film['budget'] if film['budget'] is not None else 25000000,  # Médiane pour le budget
-            'duree': film['duree'] if film['duree'] is not None else 107,  # Médiane pour la durée
+            'budget': film['budget'] if film['budget'] is not None else 25000000,
+            'duree': film['duree'] if film['duree'] is not None else 107,
             'genre': film['genre'] if film['genre'] is not None else 'missing',
             'pays': film['pays'] if film['pays'] is not None else 'missing',
-            'salles_premiere_semaine': film['salles'] if film['salles'] is not None else None,  # Assumez une médiane ou laissez None si géré côté API
-            'scoring_acteurs_realisateurs': 0,  # Include the updated scoring
-            'coeff_studio': 0,
-            'year': film['date_sortie'].year if film['date_sortie'] and film['date_sortie'].year else None  # Assumez une médiane ou laissez None si géré côté API
+            'salles_premiere_semaine': film['salles'] if film['salles'] is not None else None,
+            'scoring_acteurs_realisateurs': film.get('scoring_acteurs_realisateurs', 0),
+            'coeff_studio': film.get('coeff_studio', 0),
+            'year': year
         }
-        json_data = json.dumps(data, cls=DecimalEncoder)  # Use custom encoder here
-        response = requests.post(url, data=json_data, headers=headers)
-        if response.status_code == 200:
-            prediction = response.json()
-            film['prediction_entrees'] = int(prediction['prediction']) #stock la prediction
-            film['estimation_entrees_cinema'] = int(film['prediction_entrees']/2000)
-            film['estimation_entrees_quot'] = int(film['estimation_entrees_cinema']/7)
-            film['estimation_recette_hebdo'] = film['estimation_entrees_cinema']*10
-            #print(film['scoring_acteurs_realisateurs'])
-            #print(film['coeff_studio'])
-            print(f"************************************{film['prediction_entrees']}")
-            PredictionFilm.objects.update_or_create(
-                titre=film['titre'],
-                defaults={'prediction_entrees': film['prediction_entrees']}
-            )
-        else:
-            film['prediction_entrees'] = f'Erreur de prédiction: {response.status_code} - {response.text}'
+
+        try:
+            json_data = json.dumps(data, cls=DecimalEncoder)
+            response = requests.post(url, data=json_data, headers=headers)
+
+            if response.status_code == 200:
+                prediction = response.json()
+                film['prediction_entrees'] = int(prediction['prediction'])
+                film['estimation_entrees_cinema'] = int(film['prediction_entrees'] / 2000)
+                film['estimation_entrees_quot'] = int(film['estimation_entrees_cinema'] / 7)
+                film['estimation_recette_hebdo'] = film['estimation_entrees_cinema'] * 10
+
+                PredictionFilm.objects.update_or_create(
+                    titre=film['titre'],
+                    defaults={'prediction_entrees': film['prediction_entrees']}
+                )
+            else:
+                film['prediction_entrees'] = f"Erreur {response.status_code}: {response.text}"
+
+        except Exception as e:
+            print(f"❌ Exception prédiction pour {film['titre']} : {e}")
+            film['prediction_entrees'] = "Erreur"
+
     return films
 
 
-@login_required
 def chiffre_page(request):
     return render(request, 'main/chiffre_page.html')
 
-@login_required
+
 def archive_page(request):
     return render(request, "main/archive_page.html")
+
+
 
 import json
 from decimal import Decimal
