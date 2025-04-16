@@ -7,7 +7,12 @@ from datetime import datetime
 from decimal import Decimal
 from .models import PredictionFilm
 from .functions import scoring_casting, get_studio_coefficient
-from .services import get_films_from_api, get_acteurs_by_film_api, get_realisateurs_by_film_api
+from .services import (
+    get_films_from_api,
+    get_acteurs_by_film_api,
+    get_realisateurs_by_film_api,
+    get_api_token,
+)
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -17,13 +22,14 @@ class DecimalEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-# Charger le CSV une seule fois
+# Charger le CSV une seule fois au chargement
 actors = pd.read_csv('main/acteurs_coef.csv')
 
 
 def home_page(request):
     # 1. Récupérer les films depuis l’API CRUD
     films = get_films_from_api()
+    print(f"🎬 Films récupérés depuis l'API CRUD : {len(films)}")
 
     for film in films:
         # 2. Ajouter acteurs et réalisateurs
@@ -48,7 +54,7 @@ def home_page(request):
     top_ten_films = films_sorted[:10]
     top_two_films = films_sorted[:2]
 
-    ch_affaires = sum(film['estimation_recette_hebdo'] for film in top_two_films)
+    ch_affaires = sum(film.get('estimation_recette_hebdo', 0) for film in top_two_films)
     charge = 4900
     benefice = ch_affaires - charge
 
@@ -67,10 +73,21 @@ def home_page(request):
 
 def get_predictions(films):
     url = os.getenv('URL_API')
-    headers = {'Content-Type': 'application/json'}
+    token = get_api_token()
+
+    if not token:
+        print("❌ Aucun token reçu pour accéder à l'API de prédiction.")
+        return films
+
+    print(f"🔑 TOKEN UTILISÉ : {token}")
+    print(f"📡 Requête vers : {url}")
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f"Bearer {token}"
+    }
 
     for film in films:
-        # Conversion date_sortie pour extraire l’année
         try:
             year = datetime.strptime(film['date_sortie'], "%Y-%m-%d").year if film['date_sortie'] else None
         except Exception as e:
@@ -82,7 +99,7 @@ def get_predictions(films):
             'duree': film['duree'] if film['duree'] is not None else 107,
             'genre': film['genre'] if film['genre'] is not None else 'missing',
             'pays': film['pays'] if film['pays'] is not None else 'missing',
-            'salles_premiere_semaine': film['salles'] if film['salles'] is not None else None,
+            'salles_premiere_semaine': film['salles'] if film['salles'] is not None else 100,
             'scoring_acteurs_realisateurs': film.get('scoring_acteurs_realisateurs', 0),
             'coeff_studio': film.get('coeff_studio', 0),
             'year': year
@@ -94,7 +111,7 @@ def get_predictions(films):
 
             if response.status_code == 200:
                 prediction = response.json()
-                film['prediction_entrees'] = int(prediction['prediction'])
+                film['prediction_entrees'] = int(float(prediction['prediction']))
                 film['estimation_entrees_cinema'] = int(film['prediction_entrees'] / 2000)
                 film['estimation_entrees_quot'] = int(film['estimation_entrees_cinema'] / 7)
                 film['estimation_recette_hebdo'] = film['estimation_entrees_cinema'] * 10
@@ -104,11 +121,12 @@ def get_predictions(films):
                     defaults={'prediction_entrees': film['prediction_entrees']}
                 )
             else:
-                film['prediction_entrees'] = f"Erreur {response.status_code}: {response.text}"
+                print(f"❌ Erreur prédiction {film['titre']} : {response.status_code}")
+                film['prediction_entrees'] = None
 
         except Exception as e:
             print(f"❌ Exception prédiction pour {film['titre']} : {e}")
-            film['prediction_entrees'] = "Erreur"
+            film['prediction_entrees'] = None
 
     return films
 
@@ -120,16 +138,6 @@ def chiffre_page(request):
 def archive_page(request):
     return render(request, "main/archive_page.html")
 
-
-
-import json
-from decimal import Decimal
-
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            return str(obj)  # Converts Decimal to string
-        return super().default(obj)
     
     
 #Lorsque vous configurez une tâche périodique avec Celery, celle-ci est exécutée de manière autonome selon

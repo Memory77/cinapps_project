@@ -25,14 +25,21 @@ def get_api_token():
 
 def get_films_from_api():
     token = get_api_token()
+    print(f"🔑 TOKEN UTILISÉ : {token}")  # Ajout debug
+
     if not token:
+        print("❌ Aucun token récupéré")
         return []
 
     url = f"{os.getenv('API_CRUD_URL')}/films/"
+    print(f"📡 Requête vers : {url}")  # Ajout debug
+
     headers = {"Authorization": f"Bearer {token}"}
 
     try:
         response = requests.get(url, headers=headers)
+        print(f"📦 Code retour : {response.status_code}")  # Ajout debug
+
         if response.status_code == 200:
             return response.json()
         else:
@@ -41,7 +48,6 @@ def get_films_from_api():
     except requests.RequestException as e:
         print(f"❌ Exception lors de la récupération des films: {e}")
         return []
-
 
 def get_acteurs_by_film_api(film_id):
     token = get_api_token()

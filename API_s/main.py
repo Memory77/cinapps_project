@@ -1,66 +1,46 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from pydantic import BaseModel
-from model_utils import load_model, prediction
+from model_utils import load_model
+from auth import get_current_user
 import pandas as pd
 
 app = FastAPI()
-model=load_model()
-
+model = load_model()  #modèle ML préchargé
 
 class FeaturesInput(BaseModel):
-    budget:float
+    budget: float
     duree: int
-    #franchise: str
     genre: str
     pays: str
-    #remake: str
     salles_premiere_semaine: int
     scoring_acteurs_realisateurs: float
     coeff_studio: int
     year: int
 
-    
-
 class PredictionOutput(BaseModel):
     prediction: float
 
-@app.post('/prediction/')
-def prediction_root(feature_input: FeaturesInput):
-    F1 = feature_input.budget
-    F2 = feature_input.duree
-    F4 = feature_input.genre
-    F5 = feature_input.pays
-    F7 = feature_input.salles_premiere_semaine
-    F8 = feature_input.scoring_acteurs_realisateurs
-    F9 = feature_input.coeff_studio
-    F10 = feature_input.year
-
-    data = pd.DataFrame([[F1, F2, F4, F5, F7, F8, F9, F10]], columns=['budget', 'duree', 'genre', 'pays', 'salles_premiere_semaine', 'scoring_acteurs_realisateurs', 'coeff_studio', 'year'])
-    predictions = model.predict(data)
-
-    return PredictionOutput(prediction=predictions)
-
-# actors = pd.read_csv('acteurs.csv')
-
-# def calcul_poids_total(casting: FeaturesInput, realisateur: FeaturesInput):
-#     poids_total = 0
-#     casting = list(casting.split(", ")) 
+@app.post('/prediction/', response_model=PredictionOutput)
+def prediction_root(
+    feature_input: FeaturesInput,
+    current_user: str = Depends(get_current_user)
+):
+    data = pd.DataFrame([{
+        'budget': feature_input.budget,
+        'duree': feature_input.duree,
+        'genre': feature_input.genre,
+        'pays': feature_input.pays,
+        'salles_premiere_semaine': feature_input.salles_premiere_semaine,
+        'scoring_acteurs_realisateurs': feature_input.scoring_acteurs_realisateurs,
+        'coeff_studio': feature_input.coeff_studio,
+        'year': feature_input.year
+    }])
     
-#     for i in range (len(casting)): 
-#         if casting[i] in actors['name'].values: #si acteur[indice] se trouve dans la colonne 'name' du dataframe 'acteurs'
-#             poids_acteur = actors.loc[actors['name'] == casting[i], 'coef_poids'].values[0]  # Récupérer le poids de l'acteur
-#             poids_total += poids_acteur  # Multiplie le poids de l'acteur par la valeur présente dans poids_total
+    prediction = model.predict(data)
+    return PredictionOutput(prediction=prediction)
 
-#     if realisateur in actors['name'].values:
-#         poids_realisateur = actors.loc[actors['name'] == realisateur, 'coef_poids'].values[0]
-#         poids_total += poids_realisateur
 
-#     return poids_total
 
-# #route api pour effectuer calcul et renvoyer le résultat
-# @app.post("/prediction/")
-# async def prediction (data: FeaturesInput):
-#     score_acteurs_realisateur = calcul_poids_total(data)
 
 
 #uvicorn main:app --host 0.0.0.0 --port 8001 --reload

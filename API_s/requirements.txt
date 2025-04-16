@@ -3,3 +3,5 @@ fastapi<1
 uvicorn<1
 requests
 pandas
+python-jose
+dotenv
