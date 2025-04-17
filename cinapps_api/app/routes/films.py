@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from app.database import get_db
-from app.models import Film
+from app.models import Film, Personne, Participation
 from app.routes.auth import get_current_user 
+
 
 router = APIRouter()
 
-# ✅ Route pour récupérer tous les films
+# route pour récupérer tous les films
 @router.get("/films/", response_model=list[Film], status_code=status.HTTP_200_OK)
 def get_films(db: Session = Depends(get_db),current_user: dict = Depends(get_current_user)):
     films = db.exec(select(Film)).all()
@@ -14,7 +15,7 @@ def get_films(db: Session = Depends(get_db),current_user: dict = Depends(get_cur
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aucun film trouvé dans la BDD")
     return films
 
-# ✅ Route pour ajouter un film
+# route pour ajouter un film
 @router.post("/films/", response_model=Film, status_code=status.HTTP_201_CREATED)
 def create_film(film: Film, db: Session = Depends(get_db),current_user: dict = Depends(get_current_user)):
     # Vérifier si un film avec le même titre existe déjà
@@ -27,7 +28,7 @@ def create_film(film: Film, db: Session = Depends(get_db),current_user: dict = D
     db.refresh(film)  # Recharge l'objet après l'insertion
     return film
 
-# ✅ Route pour supprimer un film
+# route pour supprimer un film
 @router.delete("/films/{id_film}", status_code=status.HTTP_200_OK)
 def delete_film(id_film: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     film = db.get(Film, id_film)
@@ -38,8 +39,7 @@ def delete_film(id_film: int, db: Session = Depends(get_db), current_user: dict 
     db.commit()
     return {"message": f"Le film avec l'ID {id_film} a été supprimé"}
 
-
-# ✅ Route pour mettre à jour un film
+# route pour mettre à jour un film
 @router.put("/films/{id_film}", response_model=Film, status_code=status.HTTP_200_OK)
 def update_film(id_film: int, updated_film: Film, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     film = db.get(Film, id_film)
@@ -54,3 +54,21 @@ def update_film(id_film: int, updated_film: Film, db: Session = Depends(get_db),
     db.commit()
     db.refresh(film)
     return film
+
+@router.get("/films/{id_film}/acteurs/", status_code=status.HTTP_200_OK)
+def get_acteurs_by_film(id_film: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    query = select(Personne).join(Participation).where(
+        Participation.id_film == id_film,
+        Participation.role == "acteur"
+    )
+    acteurs = db.exec(query).all()
+    return acteurs
+
+@router.get("/films/{id_film}/realisateurs/", status_code=status.HTTP_200_OK)
+def get_realisateurs_by_film(id_film: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    query = select(Personne).join(Participation).where(
+        Participation.id_film == id_film,
+        Participation.role == "realisateur"
+    )
+    realisateurs = db.exec(query).all()
+    return realisateurs

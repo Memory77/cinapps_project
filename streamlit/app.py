@@ -4,18 +4,20 @@ import requests
 import os
 from dotenv import load_dotenv
 
-# Charger les variables d'environnement
+# 🌍 Charger les variables d'environnement
 load_dotenv()
 
-# URL des API
-URL_API_CRUD = os.getenv('URL_API_CRUD')  # API CRUD
-URL_API_PRED = os.getenv('URL_API')  # API de prédiction
+URL_API_CRUD = os.getenv('URL_API_CRUD')
+URL_API_PRED = os.getenv('URL_API')
 
-# 📌 Stocker le token JWT dans Streamlit
+# 📦 Charger les coefficients des acteurs
+actors_df = pd.read_csv("acteurs_coef.csv")
+
+# 🧠 Initialiser le token
 if "access_token" not in st.session_state:
     st.session_state["access_token"] = None
 
-# 📌 Fonction pour récupérer le token JWT
+# 🔐 Fonction pour obtenir le token JWT
 def get_access_token(username, password):
     data = {"username": username, "password": password}
     try:
@@ -29,7 +31,7 @@ def get_access_token(username, password):
         st.error(f"⚠️ Erreur de connexion à l'API : {str(e)}")
         return None
 
-# 📌 Interface Streamlit : Connexion utilisateur
+# 📥 Connexion
 st.sidebar.title("🔐 Connexion")
 username = st.sidebar.text_input("👤 Nom d'utilisateur")
 password = st.sidebar.text_input("🔑 Mot de passe", type="password")
@@ -41,19 +43,49 @@ if login_button:
         st.session_state["access_token"] = token
         st.sidebar.success("✅ Connexion réussie !")
 
-# 📌 Fonction pour récupérer les films via l’API CRUD
+# 📊 Coefficient studio
+def get_studio_coefficient(studio):
+    if studio in ('Walt Disney Pictures','Warner Bros.','Paramount','Sony Pictures','Universal','20th Century Fox','Lionsgate','Columbia'):
+        return 3
+    elif studio in ('Pathé','Studiocanal','Gaumont','UGC Distribution','SND','Le Pacte','Metropolitan','EuropaCorp','GBVI','Wild Bunch','UFD','ARP Selection','Ad vitam','Haut et Court','Films du Losange','Rezo Films','TFM Distribution'):
+        return 2
+    elif studio in ('Gébéka','Memento Films','KMBO','Océan Films','AMLF','MK2 Diffusion','Gaumont Sony','Apollo Films','Sophie Dulac','Eurozoom','Jour2Fête','Pan-Européenne','Cinema Public','Polygram'):
+        return 1
+    else:
+        return 0
+
+# 🎭 Scoring à partir des acteurs/réalisateurs
+def scoring_casting(film):
+    poids_total = 0
+    token = st.session_state["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    noms = []
+
+    try:
+        acteurs = requests.get(f"{URL_API_CRUD}/films/{film['id_film']}/acteurs/", headers=headers).json()
+        realisateurs = requests.get(f"{URL_API_CRUD}/films/{film['id_film']}/realisateurs/", headers=headers).json()
+        noms = [a['nom'] for a in acteurs] + [r['nom'] for r in realisateurs]
+    except:
+        noms = []
+
+    for personne in noms:
+        if personne in actors_df['name'].values:
+            poids = actors_df.loc[actors_df['name'] == personne, 'coef_personne'].values[0]
+            poids_total += poids
+            print(f"🎭 {personne} : {poids}")
+    return poids_total
+
+# 📦 Récupérer les films via l'API CRUD
 def get_films_from_api():
     if not st.session_state["access_token"]:
         st.error("⚠️ Veuillez vous connecter pour accéder aux films.")
         return pd.DataFrame()
 
     headers = {"Authorization": f"Bearer {st.session_state['access_token']}"}
-
     try:
         response = requests.get(f"{URL_API_CRUD}/films/", headers=headers)
         if response.status_code == 200:
-            films = response.json()
-            return pd.DataFrame(films)
+            return pd.DataFrame(response.json())
         else:
             st.error(f"⚠️ Erreur API CRUD : {response.status_code}")
             return pd.DataFrame()
@@ -61,7 +93,7 @@ def get_films_from_api():
         st.error(f"⚠️ Erreur de requête API CRUD : {str(e)}")
         return pd.DataFrame()
 
-# 📌 Fonction pour nettoyer et vérifier les valeurs
+# 🧪 Nettoyage des valeurs
 def safe_value(value, default):
     if value is None or pd.isna(value):
         return default
@@ -70,23 +102,27 @@ def safe_value(value, default):
     except ValueError:
         return default
 
-# 📌 Fonction pour faire les prédictions via l'API de prédiction
+# 📈 Fonction de prédiction
 def get_predictions(film):
     headers = {'Content-Type': 'application/json'}
-    
-    # Vérification et conversion des valeurs
+    scoring = scoring_casting(film)
+    studio_coeff = get_studio_coefficient(film.get('studio', ''))
+
+    try:
+        year = pd.to_datetime(film.get('date_sortie')).year
+    except:
+        year = 2024
+
     data = {
         'budget': safe_value(film.get('budget'), 25000000),
         'duree': safe_value(film.get('duree'), 107),
         'genre': safe_value(film.get('genre'), 'missing'),
         'pays': safe_value(film.get('pays'), 'missing'),
         'salles_premiere_semaine': safe_value(film.get('salles'), 100),
-        'scoring_acteurs_realisateurs': 0,
-        'coeff_studio': 0,
-        'year': safe_value(film.get('date_sortie', 2024), 2024)  # Vérifier si c'est un nombre
+        'scoring_acteurs_realisateurs': scoring,
+        'coeff_studio': studio_coeff,
+        'year': year
     }
-
-    #print("📤 Données envoyées à l'API de prédiction :", data)  # Debug
 
     try:
         response = requests.post(URL_API_PRED, json=data, headers=headers)
@@ -94,32 +130,29 @@ def get_predictions(film):
             prediction = response.json()
             return safe_value(prediction.get('prediction'), 0)
         else:
-            print(f"⚠️ Erreur API de prédiction : {response.status_code} - {response.text}")
+            print(f"⚠️ Erreur API prédiction : {response.status_code} - {response.text}")
             return f"Erreur API: {response.status_code}"
     except requests.exceptions.RequestException as e:
         return f"Erreur de requête: {str(e)}"
 
-# 📌 Interface principale
-st.title("🎬 Prédiction d'entrées pour les films")
+# 🖥️ Interface principale
+st.title("🎬 Prédiction d'entrées - CinéApp")
 
-# 🔥 Vérifier si l'utilisateur est connecté avant de récupérer les films
 if st.session_state["access_token"]:
     films = get_films_from_api()
 
     if films.empty:
-        st.warning("⚠️ Aucun film trouvé dans la base de données.")
+        st.warning("⚠️ Aucun film trouvé.")
     else:
-        # Appliquer la prédiction sur chaque film
+        st.info(f"📊 {len(films)} films récupérés.")
         films["prediction_entrees"] = films.apply(get_predictions, axis=1)
 
-        # Trier les films par nombre d'entrées décroissant
         films_sorted = films.sort_values(by="prediction_entrees", ascending=False)
 
-        # 🔥 Affichage des films avec prédictions
-        st.write("🎬 **Top Films avec prédictions**")
-        st.dataframe(films_sorted)
+        st.subheader("🎯 Top Prédictions")
+        st.dataframe(films_sorted[["titre", "prediction_entrees", "budget", "studio"]])
 
-        # 🔥 Graphique des prédictions
+        st.subheader("📊 Graphique")
         st.bar_chart(films_sorted.set_index("titre")["prediction_entrees"])
 else:
-    st.warning("⚠️ Veuillez vous connecter pour afficher les films et les prédictions.")
+    st.warning("⛔ Veuillez vous connecter pour voir les prédictions.")
