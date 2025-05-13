@@ -173,3 +173,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/'
 
 AUTH_USER_MODEL = "main.User"
+
+
+
+
+#  Utiliser SQLite en RAM pour les tests (plus rapide, pas de config)
+import sys
+
+if 'test' in sys.argv:
+    print("🔧 Mode TEST activé ➜ SQLite utilisé au lieu de MySQL")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
