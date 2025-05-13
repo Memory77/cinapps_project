@@ -20,12 +20,14 @@ jobs:
         python-version: '3.10'
 
     - name: Install dependencies
+      working-directory: cinapps
       run: |
         python -m venv venv
         source venv/bin/activate
         pip install -r requirements.txt
 
     - name: Run Django tests
+      working-directory: cinapps
       run: |
         source venv/bin/activate
         python manage.py test
