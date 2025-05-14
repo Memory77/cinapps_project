@@ -31,7 +31,9 @@ DEBUG = os.getenv('DEBUG') == '1'
 
 ALLOWED_HOSTS = ['*']
 
-
+# ➕ Fallback pour les URLs d'API en mode test/CI
+API_CRUD_URL = os.getenv("API_CRUD_URL", "http://fake-crud.test")
+URL_API = os.getenv("URL_API", "http://fake-predict.test")
 
 # Application definition
 
