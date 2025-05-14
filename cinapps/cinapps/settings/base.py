@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'test-secret-key')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == '1'
@@ -32,8 +32,8 @@ DEBUG = os.getenv('DEBUG') == '1'
 ALLOWED_HOSTS = ['*']
 
 # ➕ Fallback pour les URLs d'API en mode test/CI
-API_CRUD_URL = os.getenv("API_CRUD_URL", "http://fake-crud.test")
-URL_API = os.getenv("URL_API", "http://fake-predict.test")
+# API_CRUD_URL = os.getenv("API_CRUD_URL", "http://fake-crud.test")
+# URL_API = os.getenv("URL_API", "http://fake-predict.test")
 
 # Application definition
 
