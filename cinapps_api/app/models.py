@@ -18,8 +18,8 @@ class Film(SQLModel, table=True):
     budget: Optional[int] = None
     entrees: Optional[int] = None
     anecdotes: Optional[str] = None
-    film_url: Optional[str] = None
-    is_pred: Optional[bool] = None
+    # film_url: Optional[str] = None
+    # is_pred: Optional[bool] = None
 
 class User(SQLModel, table=True):
     __tablename__ = "main_user"  # On utilise la table existante

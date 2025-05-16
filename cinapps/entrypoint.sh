@@ -1,23 +1,23 @@
 #!/bin/sh
 
-# while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do
-#   echo "En attente de la disponibilité de Postgres..."
-#   sleep 1
-# done
+set -e
 
-# Effectuer les migrations
-echo "Effectuer les migrations de la base de données..."
+echo "📡 Attente de la base de données MySQL..."
 
-python manage.py makemigrations && python manage.py migrate
+# Attente active tant que la BDD n’est pas prête
+while ! nc -z "$MYSQL_HOST" "${MYSQL_PORT:-3306}"; do
+  echo "⏳ En attente de MySQL à $MYSQL_HOST:${MYSQL_PORT:-3306}..."
+  sleep 1
+done
 
+echo "✅ Base disponible. Migrations..."
+
+python manage.py makemigrations
+python manage.py migrate --no-input --fake-initial
+
+echo "📦 Collecte des fichiers statiques..."
 python manage.py collectstatic --no-input
 
-echo "Lancer le serveur"
-
-### production ###
-# ### Version avec gunicorn pour le serveur web
-gunicorn cinapps.wsgi:application --workers=4 --bind=0.0.0.0:8001 --reload
-
-
-# dev en local ###
-# python manage.py runserver 0.0.0.0:8000
+echo "🚀 Démarrage du serveur Django avec Gunicorn..."
+#gunicorn cinapps.wsgi:application --workers=4 --bind=0.0.0.0:8000
+python manage.py runserver 0.0.0.0:8000
