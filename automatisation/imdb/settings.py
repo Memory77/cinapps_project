@@ -67,10 +67,13 @@ ITEM_PIPELINES = {
     "imdb.pipelines.NewFilmsPipeline": 300,
     'imdb.pipelines.MySQLStorePipeline': 800,
 }
-MYSQL_USER = 'cinapps_user'
-MYSQL_PASSWORD = 'cinapps888'
-MYSQL_HOST = 'localhost'
-MYSQL_DATABASE = 'cinapps_db'
+import os
+
+MYSQL_HOST = os.getenv('MYSQL_HOST', 'db')  # ✅ important
+MYSQL_USER = os.getenv('MYSQL_USER', 'cinapps_user')
+MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'cinapps888')
+MYSQL_DATABASE = os.getenv('MYSQL_DATABASE', 'cinapps_db')
+
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 #AUTOTHROTTLE_ENABLED = True

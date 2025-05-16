@@ -193,6 +193,7 @@ class MySQLStorePipeline:
             item.get('image'), item.get('budget'), item.get('entrees'), item.get('anecdotes')
         ))
         self.conn.commit()
+        print(f"✅ Film inséré : {item.get('titre')}")
         return self.cursor.lastrowid
 
     def ensure_person_exists(self, person_name):

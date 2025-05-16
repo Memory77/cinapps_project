@@ -1,0 +1,28 @@
+# automatisation/Dockerfile.cron
+
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Dépendances Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copier le code Scrapy
+COPY . .
+
+# Installer cron
+RUN apt-get update && apt-get install -y cron
+
+# Ajouter le fichier cron
+COPY cronjob /etc/cron.d/scrapy-cron
+
+# Autorisations
+RUN chmod 0644 /etc/cron.d/scrapy-cron && \
+    crontab /etc/cron.d/scrapy-cron
+
+# Créer le fichier de log
+RUN touch /var/log/cron.log
+
+# Commande de lancement
+CMD cron && tail -f /var/log/cron.log

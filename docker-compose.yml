@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cinapps_db
+      MYSQL_USER: cinapps_user
+      MYSQL_PASSWORD: cinapps888
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cinapps_net
+
+  scrapy:
+    build:
+      context: ./automatisation
+    depends_on:
+      - db
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: cinapps_user
+      MYSQL_PASSWORD: cinapps888
+      MYSQL_DATABASE: cinapps_db
+    networks:
+      - cinapps_net
+    command: scrapy crawl alloc_newfilms
+
+  scrapy-cron:
+    build:
+      context: ./automatisation
+      dockerfile: Dockerfile.cron
+    depends_on:
+      - db
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: cinapps_user
+      MYSQL_PASSWORD: cinapps888
+      MYSQL_DATABASE: cinapps_db
+    networks:
+      - cinapps_net
+
+volumes:
+  db_data:
+
+networks:
+  cinapps_net:
