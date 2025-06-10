@@ -28,3 +28,14 @@ CREATE TABLE IF NOT EXISTS Participations (
     FOREIGN KEY (id_film) REFERENCES films(id_film) ON DELETE CASCADE,
     FOREIGN KEY (id_personne) REFERENCES Personnes(id_personne) ON DELETE CASCADE
 );
+
+
+CREATE TABLE IF NOT EXISTS avis (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_film INT NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    note INT NOT NULL CHECK (note BETWEEN 1 AND 5),
+    commentaire TEXT,
+    FOREIGN KEY (id_film) REFERENCES films(id_film) ON DELETE CASCADE
+);
+
