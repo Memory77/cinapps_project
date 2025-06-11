@@ -9,3 +9,4 @@ admin.site.register(PredApi)
 
 #enregistrement en bdd des données de prédiction des films
 admin.site.register(PredictionFilm)
+
