@@ -22,5 +22,22 @@ $(function(){
 // exemple d'utilisation avec les deux ensembles : <h1 class="wow animated bounceInRight" data-wow-duration="1s" data-wow-delay="1s">TITRE 1 exemple</h1>
 
 
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".star-rating").forEach(function (rating) {
+    const stars = rating.querySelectorAll("label");
+    stars.forEach((star) => {
+      star.addEventListener("mouseover", function () {
+        const current = this;
+        stars.forEach((s) => {
+          s.style.color = s.compareDocumentPosition(current) & Node.DOCUMENT_POSITION_FOLLOWING ? "#ccc" : "orange";
+        });
+      });
+      rating.addEventListener("mouseleave", function () {
+        stars.forEach((s) => s.style.color = "");
+      });
+    });
+  });
+});
+
 
 

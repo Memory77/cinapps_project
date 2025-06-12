@@ -1,0 +1,51 @@
+name: 🚀 CI/CD - Build & Push vers Docker Hub
+
+on:
+  push:
+    branches:
+      - main  # Tu peux changer cette branche cible si besoin
+
+jobs:
+  build-and-push:
+    name: 🛠️ Build & Push All Microservices
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      IMAGE_TAG: latest
+
+    steps:
+      - name: ↓ Checkout le code
+        uses: actions/checkout@v3
+
+      - name: 🔐 Connexion à Docker Hub
+        run: echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+      - name: 📦 Build & push cinapps_api (API CRUD)
+        run: |
+          docker build -t $DOCKERHUB_USERNAME/cinapps_api:$IMAGE_TAG ./cinapps_api
+          docker push $DOCKERHUB_USERNAME/cinapps_api:$IMAGE_TAG
+
+      - name: 📦 Build & push api_prediction (API Prédiction)
+        run: |
+          docker build -t $DOCKERHUB_USERNAME/api_prediction:$IMAGE_TAG ./API_s
+          docker push $DOCKERHUB_USERNAME/api_prediction:$IMAGE_TAG
+
+      - name: 📦 Build & push cinapps (frontend Django)
+        run: |
+          docker build -t $DOCKERHUB_USERNAME/cinapps:$IMAGE_TAG ./cinapps
+          docker push $DOCKERHUB_USERNAME/cinapps:$IMAGE_TAG
+
+      - name: 📦 Build & push scrapy (crawler)
+        run: |
+          docker build -t $DOCKERHUB_USERNAME/scrapy_crawler:$IMAGE_TAG ./automatisation
+          docker push $DOCKERHUB_USERNAME/scrapy_crawler:$IMAGE_TAG
+
+      - name: 📦 Build & push scrapy-cron (cron de crawl)
+        run: |
+          docker build -f ./automatisation/Dockerfile.cron -t $DOCKERHUB_USERNAME/scrapy_cron:$IMAGE_TAG ./automatisation
+          docker push $DOCKERHUB_USERNAME/scrapy_cron:$IMAGE_TAG
+
+      - name: ✅ Logout Docker
+        run: docker logout
