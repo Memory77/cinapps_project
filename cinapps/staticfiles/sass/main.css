@@ -1,4 +1,3 @@
-@charset "UTF-8";
 @font-face {
   font-family: "futiger";
   src: url("../fonts/Frutiger.ttf");
@@ -33,7 +32,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 110vh;
-  font-family: "comic", sans-serif;
+  font-family: "futiger", sans-serif;
   background-color: rgb(248, 248, 248);
 }
 
@@ -386,8 +385,8 @@ li {
   color: rgb(185, 46, 0);
 }
 #home #films #box-container #box-films {
-  max-height: 700px; /* Définissez la hauteur maximale souhaitée */
-  overflow-y: auto; /* Active la barre de défilement verticale lorsque le contenu dépasse la hauteur maximale */
+  max-height: 700px;
+  overflow-y: auto;
   overflow-x: hidden;
   border: 2px solid rgb(0, 0, 0);
   border-radius: 10px;
@@ -396,7 +395,7 @@ li {
 #home #films #box-container .affiche {
   display: grid;
   grid-template-columns: 500px 1fr;
-  grid-template-rows: 200px;
+  height: auto;
   border: 1px rgba(0, 0, 0, 0.418) solid;
   border-radius: 20px;
   overflow: hidden;
@@ -408,29 +407,84 @@ li {
 #home #films #box-container .affiche:hover {
   grid-template-columns: 350px 1fr;
   cursor: pointer;
-  grid-template-rows: 700px;
 }
-#home #films #box-container .img-affiche {
+#home #films #box-container .affiche .img-affiche {
   overflow: hidden;
 }
-#home #films #box-container .img-affiche img {
+#home #films #box-container .affiche .img-affiche img {
   height: 400px;
 }
-#home #films #box-container .content-affiche {
+#home #films #box-container .affiche .content-affiche {
   position: relative;
   padding-bottom: 20px;
 }
-#home #films #box-container .title-affiche {
+#home #films #box-container .affiche .content-affiche .title-affiche {
   padding-left: 10px;
-  color: rgb(0, 0, 0);
+  color: black;
 }
-#home #films #box-container .des-affiche {
+#home #films #box-container .affiche .content-affiche .des-affiche {
   width: 90%;
-  bottom: 0;
   padding: 0px 20px 0px 10px;
   font-size: 17px;
   line-height: 30px;
-  font-size: 700;
+  font-weight: 700;
+}
+#home #films #box-container .affiche .content-affiche .avis-box {
+  background-color: #fff0f0;
+  border: 2px dashed #ff5555;
+  padding: 15px;
+  margin-top: 10px;
+  border-radius: 10px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+#home #films #box-container .affiche .content-affiche .avis-box h3 {
+  color: #b80000;
+  margin-bottom: 10px;
+}
+#home #films #box-container .affiche .content-affiche .avis-box select,
+#home #films #box-container .affiche .content-affiche .avis-box textarea {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+#home #films #box-container .affiche .content-affiche .avis-box button {
+  background-color: orangered;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+#home #films #box-container .affiche .content-affiche .avis-box button:hover {
+  background-color: darkred;
+}
+#home #films #box-container .affiche .content-affiche .avis-liste {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #fdfdfd;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+#home #films #box-container .affiche .content-affiche .avis-liste h3 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 10px;
+}
+#home #films #box-container .affiche .content-affiche .avis-liste .avis-item {
+  border-bottom: 1px solid #eee;
+  padding: 8px 0;
+}
+#home #films #box-container .affiche .content-affiche .avis-liste .avis-item strong {
+  color: #000;
+}
+#home #films #box-container .affiche .content-affiche .avis-liste .avis-item em {
+  color: #999;
+}
+#home #films #box-container .affiche .content-affiche .avis-liste .avis-item p {
+  margin: 5px 0;
+  color: #444;
 }
 
 @media screen and (max-width: 1800px) {
@@ -452,6 +506,31 @@ li {
     width: 100%;
   }
 }
+.star-rating {
+  direction: rtl;
+  display: inline-flex;
+  font-size: 24px;
+  justify-content: flex-start;
+  gap: 4px;
+  margin: 10px 0;
+}
+.star-rating input[type=radio] {
+  display: none;
+}
+.star-rating label {
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.star-rating input[type=radio]:checked ~ label,
+.star-rating input[type=radio]:checked ~ label ~ label {
+  color: gold;
+}
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+  color: orange;
+}
+
 @media screen and (max-width: 1000px) {
   #home #films #box-container .affiche {
     grid-template-columns: 150px 1fr !important;

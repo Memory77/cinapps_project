@@ -11,3 +11,4 @@ pandas
 mysqlclient
 PyMySql
 python-dotenv
+

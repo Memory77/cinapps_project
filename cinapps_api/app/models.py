@@ -18,15 +18,15 @@ class Film(SQLModel, table=True):
     budget: Optional[int] = None
     entrees: Optional[int] = None
     anecdotes: Optional[str] = None
-    film_url: Optional[str] = None
-    is_pred: Optional[bool] = None
+    # film_url: Optional[str] = None
+    # is_pred: Optional[bool] = None
 
-class User(SQLModel, table=True):
-    __tablename__ = "main_user"  # On utilise la table existante
+# class User(SQLModel, table=True):
+#     __tablename__ = "main_user"  # On utilise la table existante
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(index=True)
-    password: str  # Contient déjà le mot de passe haché
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#     username: str = Field(index=True)
+#     password: str  # Contient déjà le mot de passe haché
 
 class Personne(SQLModel, table=True):
     __tablename__ = "Personnes"
@@ -40,3 +40,16 @@ class Participation(SQLModel, table=True):
     id_film: int = Field(foreign_key="films.id_film", primary_key=True)
     id_personne: int = Field(foreign_key="Personnes.id_personne", primary_key=True)
     role: str  # 'acteur' ou 'realisateur'
+
+
+
+class Avis(SQLModel, table=True):
+    __tablename__ = "avis"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    id_film: int = Field(foreign_key="films.id_film")
+    username: str  # Pas de foreign key ici pour éviter le lien direct avec main_user
+    note: int
+    commentaire: Optional[str] = None
+
+

@@ -12,7 +12,12 @@ from .services import (
     get_acteurs_by_film_api,
     get_realisateurs_by_film_api,
     get_api_token,
+    get_avis_by_film_api,
+    post_avis_to_api
 )
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -35,6 +40,8 @@ def home_page(request):
         # 2. Ajouter acteurs et réalisateurs
         film['acteurs'] = get_acteurs_by_film_api(film['id_film'])
         film['realisateurs'] = get_realisateurs_by_film_api(film['id_film'])
+
+        film['avis'] = get_avis_by_film_api(film['id_film'])
 
         # 3. Calcul du scoring et du coefficient studio
         film['scoring_acteurs_realisateurs'] = scoring_casting(film, actors)
@@ -130,6 +137,23 @@ def get_predictions(films):
 
     return films
 
+@require_POST
+@login_required
+def depot_avis(request):
+    film_id = request.POST.get("id_film")
+    note = request.POST.get("note")
+    commentaire = request.POST.get("commentaire", "")
+
+    if film_id and note:
+        post_avis_to_api(
+            id_film=int(film_id),
+            username=request.user.username,
+            note=int(note),
+            commentaire=commentaire
+        )
+
+    return redirect("home")
+
 
 def chiffre_page(request):
     return render(request, 'main/chiffre_page.html')
@@ -155,6 +179,5 @@ def archive_page(request):
 # performances ou le fonctionnement de vos vues Django, sauf si vous avez configuré quelque chose pour que les 
 #vues interagissent avec les résultats de cette tâche.
 #Non-liée aux requêtes des utilisateurs : Les utilisateurs qui accèdent à votre site ne déclenchent pas cette tâche. Ils verront simplement les résultats (par exemple, les films et les prédictions) qui ont été générés et sauvegardés lors de la dernière exécution de la tâche.
-
-
-#
+# views.py
+# main/views.py
