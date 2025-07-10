@@ -2,22 +2,27 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install cron and any system deps
 RUN apt-get update && apt-get install -y cron
 
-# Install Python dependencies
+# --- 🔐 Variables MySQL
+ARG MYSQL_HOST
+ARG MYSQL_USER
+ARG MYSQL_PASSWORD
+ARG MYSQL_DATABASE
+
+ENV MYSQL_HOST=$MYSQL_HOST \
+    MYSQL_USER=$MYSQL_USER \
+    MYSQL_PASSWORD=$MYSQL_PASSWORD \
+    MYSQL_DATABASE=$MYSQL_DATABASE
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy your source code
 COPY . .
-
-# Copy and register the cron job
 COPY cronjob /etc/cron.d/scrapy-cron
 RUN chmod 0644 /etc/cron.d/scrapy-cron && crontab /etc/cron.d/scrapy-cron
 
-# Create the log file
 RUN touch /var/log/cron.log
 
-# Start cron
 CMD ["cron", "-f"]
+

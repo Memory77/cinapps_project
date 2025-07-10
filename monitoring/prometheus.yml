@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 10s  # Récupère les métriques toutes les 10 secondes
+
+scrape_configs:
+  - job_name: 'cinapps_api'
+    static_configs:
+      - targets: ['cinapps_api:8000']
+
+  - job_name: 'api_prediction'
+    static_configs:
+      - targets: ['api_prediction:8001']
+
+
+#docker compose -f monitoring/docker-compose.monitoring.yml up -d
+#lancer d'abord le docker compose principal
+

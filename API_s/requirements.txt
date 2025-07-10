@@ -5,3 +5,4 @@ requests
 pandas
 python-jose
 dotenv
+prometheus_fastapi_instrumentator

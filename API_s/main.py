@@ -3,9 +3,14 @@ from pydantic import BaseModel
 from model_utils import load_model
 from auth import get_current_user
 import pandas as pd
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
-model = load_model()  #modèle ML préchargé
+
+# Instrumentation Prometheus
+Instrumentator().instrument(app).expose(app)
+
+model = load_model()
 
 class FeaturesInput(BaseModel):
     budget: float
@@ -38,6 +43,7 @@ def prediction_root(
     
     prediction = model.predict(data)
     return PredictionOutput(prediction=prediction)
+
 
 
 

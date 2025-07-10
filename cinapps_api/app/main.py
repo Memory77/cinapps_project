@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.routes import films, auth, avis
 from app.database import create_db_and_tables
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(
     title="Cinapps API",
@@ -13,6 +14,9 @@ app = FastAPI(
     ],
 )
 
+# Instrumentation Prometheus
+Instrumentator().instrument(app).expose(app)
+
 # Inclusion des routes
 app.include_router(auth.router, tags=["Auth"])
 app.include_router(films.router, tags=["Films"])
@@ -22,5 +26,6 @@ app.include_router(avis.router, tags=["Avis"])
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+
 
 #uvicorn app.main:app --reload
