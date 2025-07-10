@@ -55,7 +55,7 @@ services:
     build:
       context: ./API_s
     ports:
-      - "8001:8000"
+      - "8001:8001"
     depends_on:
       - cinapps_api
     env_file:

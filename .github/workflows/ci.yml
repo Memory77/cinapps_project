@@ -1,13 +1,13 @@
-name: 🚀 CI/CD - Build & Push vers Docker Hub
+name: 🚀 CI - Build & Push vers Docker Hub
 
 on:
   push:
     branches:
-      - main  # Tu peux changer cette branche cible si besoin
+      - main
 
 jobs:
   build-and-push:
-    name: 🛠️ Build & Push All Microservices
+    name: 🛠️ Build & Push de tous les microservices
     runs-on: ubuntu-latest
 
     env:
@@ -16,36 +16,41 @@ jobs:
       IMAGE_TAG: latest
 
     steps:
-      - name: ↓ Checkout le code
+      - name: 📥 Checkout du code
         uses: actions/checkout@v3
 
       - name: 🔐 Connexion à Docker Hub
-        run: echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+        run: echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
 
-      - name: 📦 Build & push cinapps_api (API CRUD)
+      - name: 🧱 Build & Push API CRUD
         run: |
           docker build -t $DOCKERHUB_USERNAME/cinapps_api:$IMAGE_TAG ./cinapps_api
           docker push $DOCKERHUB_USERNAME/cinapps_api:$IMAGE_TAG
 
-      - name: 📦 Build & push api_prediction (API Prédiction)
+      - name: 🧠 Build & Push API Prediction
         run: |
           docker build -t $DOCKERHUB_USERNAME/api_prediction:$IMAGE_TAG ./API_s
           docker push $DOCKERHUB_USERNAME/api_prediction:$IMAGE_TAG
 
-      - name: 📦 Build & push cinapps (frontend Django)
+      - name: 🎬 Build & Push Front Django
         run: |
           docker build -t $DOCKERHUB_USERNAME/cinapps:$IMAGE_TAG ./cinapps
           docker push $DOCKERHUB_USERNAME/cinapps:$IMAGE_TAG
 
-      - name: 📦 Build & push scrapy (crawler)
+      - name: 🐍 Build & Push Scrapy
         run: |
           docker build -t $DOCKERHUB_USERNAME/scrapy_crawler:$IMAGE_TAG ./automatisation
           docker push $DOCKERHUB_USERNAME/scrapy_crawler:$IMAGE_TAG
 
-      - name: 📦 Build & push scrapy-cron (cron de crawl)
+      - name: ⏰ Build & Push Scrapy Cron
         run: |
           docker build -f ./automatisation/Dockerfile.cron -t $DOCKERHUB_USERNAME/scrapy_cron:$IMAGE_TAG ./automatisation
           docker push $DOCKERHUB_USERNAME/scrapy_cron:$IMAGE_TAG
 
-      - name: ✅ Logout Docker
+      - name: 🗄️ Build & Push MySQL personnalisé
+        run: |
+          docker build -t $DOCKERHUB_USERNAME/mysql_custom:$IMAGE_TAG ./deploiement/mysql
+          docker push $DOCKERHUB_USERNAME/mysql_custom:$IMAGE_TAG
+
+      - name: 🚪 Déconnexion de Docker
         run: docker logout
