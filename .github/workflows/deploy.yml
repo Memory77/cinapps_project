@@ -1,4 +1,4 @@
-name: 🚀 CD - Déploiement vers Azure (semi-auto)
+name: 🚀 CD - Déploiement vers Azure 
 
 on:
   workflow_run:
@@ -12,10 +12,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧾 Checkout code
+      - name: 🧾 Checkout du dépôt
         uses: actions/checkout@v3
 
-      - name: 🔐 Récupérer les secrets GitHub
+      - name: 🔐 Login Azure (via AZURE_CREDENTIALS)
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 🌱 Exporter les secrets GitHub comme variables d’environnement
         run: |
           echo "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}" >> $GITHUB_ENV
           echo "DOCKERHUB_PASSWORD=${{ secrets.DOCKERHUB_TOKEN }}" >> $GITHUB_ENV
@@ -31,18 +36,7 @@ jobs:
           echo "API_CRUD_PASSWORD=${{ secrets.API_CRUD_PASSWORD }}" >> $GITHUB_ENV
           echo "URL_API=${{ secrets.URL_API }}" >> $GITHUB_ENV
 
-      - name: 🔐 Connexion à Azure
-        uses: azure/login@v1
-        with:
-          creds: |
-            {
-              "clientId": "${{ secrets.AZURE_USERNAME }}",
-              "clientSecret": "${{ secrets.AZURE_PASSWORD }}",
-              "tenantId": "${{ secrets.AZURE_TENANT_ID }}",
-              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-            }
-
-      - name: 🚀 Lancer le script de déploiement
+      - name: 🚀 Exécuter le script de déploiement
         run: |
           chmod +x ./deploy.sh
           ./deploy.sh
