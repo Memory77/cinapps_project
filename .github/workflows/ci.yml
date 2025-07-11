@@ -1,13 +1,39 @@
-name: 🚀 CI - Build & Push vers Docker Hub
+name: 🚀 CI - Tests + Build & Push Docker
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
+  test:
+    name: ✅ Run Django Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        working-directory: cinapps
+        run: |
+          pip install -r requirements.txt
+
+      - name: 🧪 Run Django tests
+        working-directory: cinapps
+        run: |
+          python manage.py test
+
   build-and-push:
-    name: 🛠️ Build & Push de tous les microservices
+    name: 🛠️ Build & Push Docker Images
+    needs: test  # 🔐 Ne se lance que si les tests passent
     runs-on: ubuntu-latest
 
     env:
@@ -16,7 +42,7 @@ jobs:
       IMAGE_TAG: latest
 
     steps:
-      - name: 📥 Checkout du code
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
 
       - name: 🔐 Connexion à Docker Hub
