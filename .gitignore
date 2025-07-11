@@ -6,7 +6,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+deploy_local.sh
 # C extensions
 *.so
 .env*
