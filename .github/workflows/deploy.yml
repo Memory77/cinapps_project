@@ -1,34 +1,45 @@
 name: 🚀 CD - Déploiement vers Azure (semi-auto)
 
 on:
-  workflow_dispatch:  # tu déclenches manuellement depuis GitHub
+  workflow_run:
+    workflows: ["🚀 CI - Build & Push vers Docker Hub"]
+    types:
+      - completed
 
 jobs:
   deploy:
-    name: 🔧 Déploiement manuel sur Azure
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
-    env:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
-      AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
     steps:
-      - name: 📥 Checkout du code
+      - name: 🧾 Checkout code
         uses: actions/checkout@v3
 
-      - name: ⚙️ Installe Azure CLI
-        uses: azure/setup-azure@v3
-
-      - name: 🔐 Connexion à Azure
+      - name: 🔐 Récupérer les secrets GitHub
         run: |
-          az login --username "$AZURE_USERNAME" \
-                   --password "$AZURE_PASSWORD" \
-                   --tenant "$AZURE_TENANT_ID"
+          echo "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}" >> $GITHUB_ENV
+          echo "DOCKERHUB_PASSWORD=${{ secrets.DOCKERHUB_TOKEN }}" >> $GITHUB_ENV
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> $GITHUB_ENV
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> $GITHUB_ENV
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> $GITHUB_ENV
+          echo "MYSQL_PORT=${{ secrets.MYSQL_PORT }}" >> $GITHUB_ENV
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
+          echo "ALGORITHM=${{ secrets.ALGORITHM }}" >> $GITHUB_ENV
+          echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> $GITHUB_ENV
+          echo "DEBUG=${{ secrets.DEBUG }}" >> $GITHUB_ENV
+          echo "API_CRUD_USERNAME=${{ secrets.API_CRUD_USERNAME }}" >> $GITHUB_ENV
+          echo "API_CRUD_PASSWORD=${{ secrets.API_CRUD_PASSWORD }}" >> $GITHUB_ENV
+          echo "URL_API=${{ secrets.URL_API }}" >> $GITHUB_ENV
 
-      - name: 📦 Lancer le script de déploiement
+      - name: 🧪 Installer Azure CLI
+        uses: azure/setup-azure@v3
+        with:
+          client-id: ${{ secrets.AZURE_USERNAME }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_PASSWORD }}
+
+      - name: 🚀 Lancer le script de déploiement
         run: |
           chmod +x ./deploy.sh
           ./deploy.sh

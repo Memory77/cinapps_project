@@ -8,11 +8,18 @@ AZURE_LOCATION="francecentral"
 IMAGE_TAG="latest"
 
 : "${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME non défini}"
-: "${DOCKERHUB_TOKEN:?DOCKERHUB_TOKEN non défini}"
-
+: "${DOCKERHUB_PASSWORD:?DOCKERHUB_PASSWORD non défini}"
 : "${MYSQL_USER:?}"
 : "${MYSQL_PASSWORD:?}"
 : "${MYSQL_DATABASE:?}"
+: "${MYSQL_PORT:?}"
+: "${SECRET_KEY:?}"
+: "${ALGORITHM:?}"
+: "${ACCESS_TOKEN_EXPIRE_MINUTES:?}"
+: "${DEBUG:?}"
+: "${API_CRUD_USERNAME:?}"
+: "${API_CRUD_PASSWORD:?}"
+: "${URL_API:?}"
 
 # 🔁 Retry wrapper
 retry_az_create() {
