@@ -3,21 +3,20 @@ import pandas as pd
 import requests
 import os
 from dotenv import load_dotenv
+from monitoring.monitor_drift import generate_drift_report
+from utils import scoring_casting, get_studio_coefficient
 
 # 🌍 Charger les variables d'environnement
 load_dotenv()
-
 URL_API_CRUD = os.getenv('URL_API_CRUD')
 URL_API_PRED = os.getenv('URL_API')
+API_CRUD_USERNAME = os.getenv('API_CRUD_USERNAME')
+API_CRUD_PASSWORD = os.getenv('API_CRUD_PASSWORD')
 
 # 📦 Charger les coefficients des acteurs
 actors_df = pd.read_csv("acteurs_coef.csv")
 
-# 🧠 Initialiser le token
-if "access_token" not in st.session_state:
-    st.session_state["access_token"] = None
-
-# 🔐 Fonction pour obtenir le token JWT
+# 🔐 Authentification
 def get_access_token(username, password):
     data = {"username": username, "password": password}
     try:
@@ -31,56 +30,23 @@ def get_access_token(username, password):
         st.error(f"⚠️ Erreur de connexion à l'API : {str(e)}")
         return None
 
-# 📥 Connexion
-st.sidebar.title("🔐 Connexion")
-username = st.sidebar.text_input("👤 Nom d'utilisateur")
-password = st.sidebar.text_input("🔑 Mot de passe", type="password")
-login_button = st.sidebar.button("Se connecter")
-
-if login_button:
-    token = get_access_token(username, password)
+if "access_token" not in st.session_state or not st.session_state["access_token"]:
+    token = get_access_token(API_CRUD_USERNAME, API_CRUD_PASSWORD)
     if token:
         st.session_state["access_token"] = token
-        st.sidebar.success("✅ Connexion réussie !")
-
-# 📊 Coefficient studio
-def get_studio_coefficient(studio):
-    if studio in ('Walt Disney Pictures','Warner Bros.','Paramount','Sony Pictures','Universal','20th Century Fox','Lionsgate','Columbia'):
-        return 3
-    elif studio in ('Pathé','Studiocanal','Gaumont','UGC Distribution','SND','Le Pacte','Metropolitan','EuropaCorp','GBVI','Wild Bunch','UFD','ARP Selection','Ad vitam','Haut et Court','Films du Losange','Rezo Films','TFM Distribution'):
-        return 2
-    elif studio in ('Gébéka','Memento Films','KMBO','Océan Films','AMLF','MK2 Diffusion','Gaumont Sony','Apollo Films','Sophie Dulac','Eurozoom','Jour2Fête','Pan-Européenne','Cinema Public','Polygram'):
-        return 1
     else:
-        return 0
+        st.stop()
 
-# 🎭 Scoring à partir des acteurs/réalisateurs
-def scoring_casting(film):
-    poids_total = 0
-    token = st.session_state["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
-    noms = []
-
+# ⚙️ Utilitaires
+def safe_value(value, default):
+    if value is None or pd.isna(value):
+        return default
     try:
-        acteurs = requests.get(f"{URL_API_CRUD}/films/{film['id_film']}/acteurs/", headers=headers).json()
-        realisateurs = requests.get(f"{URL_API_CRUD}/films/{film['id_film']}/realisateurs/", headers=headers).json()
-        noms = [a['nom'] for a in acteurs] + [r['nom'] for r in realisateurs]
-    except:
-        noms = []
+        return int(value) if isinstance(default, int) else value
+    except ValueError:
+        return default
 
-    for personne in noms:
-        if personne in actors_df['name'].values:
-            poids = actors_df.loc[actors_df['name'] == personne, 'coef_personne'].values[0]
-            poids_total += poids
-            print(f"🎭 {personne} : {poids}")
-    return poids_total
-
-# 📦 Récupérer les films via l'API CRUD
 def get_films_from_api():
-    if not st.session_state["access_token"]:
-        st.error("⚠️ Veuillez vous connecter pour accéder aux films.")
-        return pd.DataFrame()
-
     headers = {"Authorization": f"Bearer {st.session_state['access_token']}"}
     try:
         response = requests.get(f"{URL_API_CRUD}/films/", headers=headers)
@@ -90,22 +56,17 @@ def get_films_from_api():
             st.error(f"⚠️ Erreur API CRUD : {response.status_code}")
             return pd.DataFrame()
     except requests.exceptions.RequestException as e:
-        st.error(f"⚠️ Erreur de requête API CRUD : {str(e)}")
+        st.error(f"⚠️ Erreur API CRUD : {str(e)}")
         return pd.DataFrame()
 
-# 🧪 Nettoyage des valeurs
-def safe_value(value, default):
-    if value is None or pd.isna(value):
-        return default
-    try:
-        return int(value) if isinstance(default, int) else value
-    except ValueError:
-        return default
-
-# 📈 Fonction de prédiction
 def get_predictions(film):
-    headers = {'Content-Type': 'application/json'}
-    scoring = scoring_casting(film)
+    token = st.session_state["access_token"]
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {token}'
+    }
+
+    scoring = scoring_casting(film, actors_df)
     studio_coeff = get_studio_coefficient(film.get('studio', ''))
 
     try:
@@ -130,29 +91,70 @@ def get_predictions(film):
             prediction = response.json()
             return safe_value(prediction.get('prediction'), 0)
         else:
-            print(f"⚠️ Erreur API prédiction : {response.status_code} - {response.text}")
-            return f"Erreur API: {response.status_code}"
-    except requests.exceptions.RequestException as e:
-        return f"Erreur de requête: {str(e)}"
+            return 0
+    except requests.exceptions.RequestException:
+        return 0
 
-# 🖥️ Interface principale
-st.title("🎬 Prédiction d'entrées - CinéApp")
+# génération automatique de current.csv
+def generate_current_csv_from_api():
+    films = get_films_from_api()
+    if films.empty:
+        return False
 
-if st.session_state["access_token"]:
+    # Ajout des colonnes nécessaires
+    films["scoring_acteurs_realisateurs"] = films.apply(lambda row: scoring_casting(row, actors_df), axis=1)
+    films["coeff_studio"] = films["studio"].apply(lambda s: get_studio_coefficient(str(s)))
+
+    # Colonnes à garder
+    required_cols = [
+        'acteurs', 'budget', 'compositeur', 'duree', 'entrees_premiere_semaine',
+        'franchise', 'genre', 'pays', 'producteur', 'realisateur',
+        'salles_premiere_semaine', 'studio', 'titre', 'scoring_acteurs_realisateurs',
+        'coeff_studio', 'season', 'year'
+    ]
+    current = films[[col for col in required_cols if col in films.columns]]
+    current.to_csv("monitoring/current.csv", index=False)
+    return True
+
+# ====================== INTERFACE STREAMLIT ======================
+
+st.set_page_config(page_title="Cinapps", page_icon="🎬", layout="wide")
+menu = st.sidebar.radio("🏷️ Navigation", ["🎬 Prédictions", "📊 Monitoring Drift"])
+
+if menu == "🎬 Prédictions":
+    st.title("🎬 Cinapps - Prédiction d'entrées cinéma")
+
     films = get_films_from_api()
 
     if films.empty:
         st.warning("⚠️ Aucun film trouvé.")
     else:
-        st.info(f"📊 {len(films)} films récupérés.")
-        films["prediction_entrees"] = films.apply(get_predictions, axis=1)
+        with st.spinner("🔍 Prédictions en cours..."):
+            films["prediction_entrees"] = films.apply(lambda row: get_predictions(row), axis=1)
+            films_sorted = films.sort_values(by="prediction_entrees", ascending=False)
 
-        films_sorted = films.sort_values(by="prediction_entrees", ascending=False)
+        st.subheader("🎯 Top 10 Prédictions")
+        st.dataframe(films_sorted[["titre", "studio", "prediction_entrees"]].head(10), use_container_width=True)
 
-        st.subheader("🎯 Top Prédictions")
-        st.dataframe(films_sorted[["titre", "prediction_entrees", "budget", "studio"]])
+        st.subheader("📊 Visualisation")
+        st.bar_chart(films_sorted.set_index("titre")["prediction_entrees"].head(10))
 
-        st.subheader("📊 Graphique")
-        st.bar_chart(films_sorted.set_index("titre")["prediction_entrees"])
-else:
-    st.warning("⛔ Veuillez vous connecter pour voir les prédictions.")
+elif menu == "📊 Monitoring Drift":
+    st.title("📊 Monitoring du Drift de données (Evidently)")
+
+    if st.button("✍️ Générer le rapport Evidently"):
+        with st.spinner("🔄 Récupération des données de prod..."):
+            if generate_current_csv_from_api():
+                success = generate_drift_report()
+                if success:
+                    st.success("✅ Rapport généré !")
+                    st.components.v1.html(open("monitoring/report/report.html", "r").read(), height=600, scrolling=True)
+                else:
+                    st.error("❌ Erreur lors de la génération du rapport.")
+            else:
+                st.warning("⚠️ Impossible de générer current.csv.")
+
+    elif os.path.exists("monitoring/report/report.html"):
+        st.components.v1.html(open("monitoring/report/report.html", "r").read(), height=600, scrolling=True)
+    else:
+        st.info("ℹ️ Aucun rapport Evidently trouvé.")

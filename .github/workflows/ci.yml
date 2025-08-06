@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: ✅ Run Django Tests
+    name: ✅ Run API PREDICTION + Django Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +30,30 @@ jobs:
         working-directory: cinapps
         run: |
           python manage.py test
+          
+      - name: Run FastAPI tests IA + CRUD
+        working-directory: API_s
+        env:
+          API_CRUD_USERNAME: ${{ secrets.API_CRUD_USERNAME }}
+          API_CRUD_PASSWORD: ${{ secrets.API_CRUD_PASSWORD }}
+          URL_API_CRUD: http://localhost:8000
+          URL_API: http://localhost:8001
+        run: |
+          pip install -r requirements.txt
+
+          # Lancer l'API CRUD
+          uvicorn cinapps_api.main:app --host 0.0.0.0 --port 8000 --reload &
+          
+          # Lancer l'API de prédiction
+          uvicorn main:app --host 0.0.0.0 --port 8001 --reload &
+
+          # Attendre que les deux APIs soient prêtes
+          sleep 10
+
+          #Tester l'intégration complète
+          pytest test_api_integration.py
+
+
 
   build-and-push:
     name: 🛠️ Build & Push Docker Images
