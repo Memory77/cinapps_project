@@ -1,10 +1,7 @@
-name: CI/CD Pipeline
+name: CI - Build and Test Prod
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -23,15 +20,19 @@ jobs:
         run: |
           echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
           echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
-          echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env
           echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
-          echo "API_CRUD_USERNAME=${{ secrets.API_CRUD_USERNAME }}" >> .env
-          echo "API_CRUD_PASSWORD=${{ secrets.API_CRUD_PASSWORD }}" >> .env
+          echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env
+          echo "MYSQL_PORT=${{ secrets.MYSQL_PORT }}" >> .env
+          echo "MYSQL_RDY=${{ secrets.MYSQL_RDY }}" >> .env
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
           echo "ALGORITHM=${{ secrets.ALGORITHM }}" >> .env
           echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> .env
+          echo "API_CRUD_USERNAME=${{ secrets.API_CRUD_USERNAME }}" >> .env
+          echo "API_CRUD_PASSWORD=${{ secrets.API_CRUD_PASSWORD }}" >> .env
+          echo "API_CRUD_URL=${{ secrets.API_CRUD_URL }}" >> .env
           echo "URL_API=${{ secrets.URL_API }}" >> .env
-          # Ajoute ici toutes les autres variables d’environnement nécessaires
+          echo "DEBUG=${{ secrets.DEBUG }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
 
       - name: Build and start containers
         run: docker compose -f docker-compose.prod.yml up -d --build
@@ -40,13 +41,13 @@ jobs:
         run: sleep 15
 
       - name: Run API integration tests
-        run: pytest API_s/test_api_integration.py
+        run: docker compose exec -T api_prediction pytest API_s/test_api_integration.py
 
       - name: Run Django tests
-        run: pytest cinapps_api/tests/
+        run: docker compose exec -T cinapps python manage.py test
 
       - name: Stop containers
         run: docker compose down
 
-      - name: Remove .env file
+      - name: Clean .env file
         run: rm .env
