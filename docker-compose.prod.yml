@@ -4,8 +4,10 @@ services:
   db:
     image: mysql:8
     restart: always
-    env_file:
-      - .env
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -19,8 +21,11 @@ services:
       context: ./automatisation
     depends_on:
       - db
-    env_file:
-      - .env
+    environment:
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     networks:
       - cinapps_net
     command: scrapy crawl alloc_newfilms
@@ -32,8 +37,11 @@ services:
       dockerfile: Dockerfile.cron
     depends_on:
       - db
-    env_file:
-      - .env
+    environment:
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     networks:
       - cinapps_net
     restart: always
@@ -45,8 +53,11 @@ services:
       - "8000:8000"
     depends_on:
       - db
-    env_file:
-      - .env
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      DATABASE_URL: ${DATABASE_URL}
     networks:
       - cinapps_net
     restart: always
@@ -58,8 +69,9 @@ services:
       - "8001:8001"
     depends_on:
       - cinapps_api
-    env_file:
-      - .env
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
     networks:
       - cinapps_net
     restart: always
@@ -73,8 +85,19 @@ services:
       - db
       - cinapps_api
       - api_prediction
-    env_file:
-      - .env
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      API_CRUD_URL: ${API_CRUD_URL}
+      API_CRUD_USERNAME: ${API_CRUD_USERNAME}
+      API_CRUD_PASSWORD: ${API_CRUD_PASSWORD}
+      URL_API: ${URL_API}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_RDY: ${MYSQL_RDY}
     networks:
       - cinapps_net
     restart: always
