@@ -1,0 +1,109 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cinapps_net
+
+  scrapy:
+    build:
+      context: ./automatisation
+    depends_on:
+      - db
+    environment:
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    networks:
+      - cinapps_net
+    command: scrapy crawl alloc_newfilms
+    restart: always
+
+  scrapy-cron:
+    build:
+      context: ./automatisation
+      dockerfile: Dockerfile.cron
+    depends_on:
+      - db
+    environment:
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    networks:
+      - cinapps_net
+    restart: always
+
+  cinapps_api:
+    build:
+      context: ./cinapps_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      DATABASE_URL: ${DATABASE_URL}
+    networks:
+      - cinapps_net
+    restart: always
+
+  api_prediction:
+    build:
+      context: ./API_s
+    ports:
+      - "8001:8001"
+    depends_on:
+      - cinapps_api
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+    networks:
+      - cinapps_net
+    restart: always
+
+  cinapps:
+    build:
+      context: ./cinapps
+    ports:
+      - "8002:8000"
+    depends_on:
+      - db
+      - cinapps_api
+      - api_prediction
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      API_CRUD_URL: ${API_CRUD_URL}
+      API_CRUD_USERNAME: ${API_CRUD_USERNAME}
+      API_CRUD_PASSWORD: ${API_CRUD_PASSWORD}
+      URL_API: ${URL_API}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_RDY: ${MYSQL_RDY}
+    networks:
+      - cinapps_net
+    restart: always
+
+volumes:
+  db_data:
+
+networks:
+  cinapps_net:

@@ -1,13 +1,63 @@
-name: 🚀 CI - Build & Push vers Docker Hub
+name: 🚀 CI - Tests + Build & Push Docker
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
+  test:
+    name: ✅ Run API PREDICTION + Django Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        working-directory: cinapps
+        run: |
+          pip install -r requirements.txt
+
+      - name: 🧪 Run Django tests
+        working-directory: cinapps
+        run: |
+          python manage.py test
+          
+      - name: Run FastAPI tests IA + CRUD
+        working-directory: API_s
+        env:
+          API_CRUD_USERNAME: ${{ secrets.API_CRUD_USERNAME }}
+          API_CRUD_PASSWORD: ${{ secrets.API_CRUD_PASSWORD }}
+          URL_API_CRUD: http://localhost:8000
+          URL_API: http://localhost:8001
+        run: |
+          pip install -r requirements.txt
+
+          # Lancer l'API CRUD
+          uvicorn cinapps_api.main:app --host 0.0.0.0 --port 8000 --reload &
+          
+          # Lancer l'API de prédiction
+          uvicorn main:app --host 0.0.0.0 --port 8001 --reload &
+
+          # Attendre que les deux APIs soient prêtes
+          sleep 10
+
+          #Tester l'intégration complète
+          pytest test_api_integration.py
+
+
+
   build-and-push:
-    name: 🛠️ Build & Push de tous les microservices
+    name: 🛠️ Build & Push Docker Images
+    needs: test  # 🔐 Ne se lance que si les tests passent
     runs-on: ubuntu-latest
 
     env:
@@ -16,7 +66,7 @@ jobs:
       IMAGE_TAG: latest
 
     steps:
-      - name: 📥 Checkout du code
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
 
       - name: 🔐 Connexion à Docker Hub
