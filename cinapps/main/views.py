@@ -30,11 +30,11 @@ class DecimalEncoder(json.JSONEncoder):
 # Charger le CSV une seule fois au chargement
 actors = pd.read_csv('main/acteurs_coef.csv')
 
-
+@login_required
 def home_page(request):
     # 1. Récupérer les films depuis l’API CRUD
     films = get_films_from_api()
-    print(f"🎬 Films récupérés depuis l'API CRUD : {len(films)}")
+    print(f"Films récupérés depuis l'API CRUD : {len(films)}")
 
     for film in films:
         # 2. Ajouter acteurs et réalisateurs
@@ -83,11 +83,11 @@ def get_predictions(films):
     token = get_api_token()
 
     if not token:
-        print("❌ Aucun token reçu pour accéder à l'API de prédiction.")
+        print("Aucun token reçu pour accéder à l'API de prédiction.")
         return films
 
-    print(f"🔑 TOKEN UTILISÉ : {token}")
-    print(f"📡 Requête vers : {url}")
+    print(f"TOKEN UTILISÉ : {token}")
+    print(f"Requête vers : {url}")
 
     headers = {
         'Content-Type': 'application/json',
@@ -162,22 +162,4 @@ def chiffre_page(request):
 def archive_page(request):
     return render(request, "main/archive_page.html")
 
-    
-    
-#Lorsque vous configurez une tâche périodique avec Celery, celle-ci est exécutée de manière autonome selon
-# l'horaire défini, et non pas à chaque fois que la page est appelée. Cela signifie que la tâche pour récupérer
-# les films et obtenir les prédictions se déclenchera automatiquement à l'heure prévue chaque semaine, 
-#indépendamment des requêtes des utilisateurs sur votre site web.
-
-#Pour clarifier le fonctionnement :
-
-#Planification de la tâche : La tâche est configurée pour s'exécuter à un moment spécifique 
-#(par exemple, tous les lundis à minuit). Cette planification est gérée par Celery Beat, 
-#qui surveille l'heure et déclenche l'exécution de la tâche conformément à son calendrier.
-#Exécution indépendante : Une fois déclenchée par Celery Beat, la tâche s'exécute de manière indépendante 
-#du cycle de vie des requêtes HTTP de votre site web. Elle fonctionne en arrière-plan et n'affecte pas les
-# performances ou le fonctionnement de vos vues Django, sauf si vous avez configuré quelque chose pour que les 
-#vues interagissent avec les résultats de cette tâche.
-#Non-liée aux requêtes des utilisateurs : Les utilisateurs qui accèdent à votre site ne déclenchent pas cette tâche. Ils verront simplement les résultats (par exemple, les films et les prédictions) qui ont été générés et sauvegardés lors de la dernière exécution de la tâche.
-# views.py
-# main/views.py
+ 

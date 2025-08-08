@@ -216,4 +216,4 @@ Exemple de requête :
 ---
 
 ## 🏆 **Crédits et remerciements**
-Projet réalisé par **Memory77** et contributeurs ✨.
+Projet réalisé par **Memory77** ✨.
