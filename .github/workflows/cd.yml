@@ -3,11 +3,11 @@ name: 🚀 CD - Déploiement sur VPS
 on:
   push:
     branches:
-      - main   # Se lance uniquement quand un merge/push sur main
+      - main  # Se lance uniquement après un merge sur main
 
 jobs:
   deploy:
-    name: 🚀 Déploiement VPS
+    name: 🚀 Déploiement sur VPS
     runs-on: ubuntu-latest
 
     steps:
@@ -18,10 +18,9 @@ jobs:
 
     - name: 🚀 Pull & Rebuild sur VPS
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+        ssh -p 2112 -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
           set -e
           
-          # Aller dans le dossier ou le créer
           if [ ! -d /appli/project/cinapps_project ]; then
             mkdir -p /appli/project/cinapps_project
             cd /appli/project/cinapps_project
@@ -32,10 +31,7 @@ jobs:
             git reset --hard origin/main
           fi
           
-          # Rebuild et restart propre
           docker compose down || true
           docker compose up -d --build
-          
-          # Nettoyage
           docker system prune -f || true
         EOF
