@@ -4,7 +4,8 @@ import pandas as pd
 from main.functions import scoring_casting
 from main.views import get_predictions
 from main.services import get_films_from_api
-
+from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 ### 1. Test d’une fonction pure (pas de DB, pas de mock) ###
 class FunctionTest(SimpleTestCase):
@@ -62,14 +63,17 @@ class PredictionTest(SimpleTestCase):
         self.assertIn('estimation_recette_hebdo', results[0])
 
 
-### 4. Test Vue home_page (mocké à fond) ###
-class ViewTest(TestCase):
 
+class ViewTest(TestCase):
     @patch("main.views.get_predictions")
     @patch("main.views.get_realisateurs_by_film_api")
     @patch("main.views.get_acteurs_by_film_api")
     @patch("main.views.get_films_from_api")
     def test_home_page_works(self, mock_films, mock_acteurs, mock_realisateurs, mock_predict):
+        User = get_user_model()
+        user = User.objects.create_user(username="testuser", password="12345")
+        self.client.login(username="testuser", password="12345")
+        
         mock_films.return_value = [{
             'id_film': 1,
             'titre': 'Test Film',
@@ -91,12 +95,48 @@ class ViewTest(TestCase):
             'estimation_recette_hebdo': 600000
         }]
 
-        client = Client()
-        response = client.get("/")
+        response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "main/home_page.html")
         self.assertIn("films", response.context)
         self.assertEqual(response.context["films"][0]["prediction_entrees"], 123456)
+
+
+# ### 4. Test Vue home_page (mocké à fond) ###
+# class ViewTest(TestCase):
+
+#     @patch("main.views.get_predictions")
+#     @patch("main.views.get_realisateurs_by_film_api")
+#     @patch("main.views.get_acteurs_by_film_api")
+#     @patch("main.views.get_films_from_api")
+#     def test_home_page_works(self, mock_films, mock_acteurs, mock_realisateurs, mock_predict):
+#         mock_films.return_value = [{
+#             'id_film': 1,
+#             'titre': 'Test Film',
+#             'budget': 10000000,
+#             'duree': 100,
+#             'genre': 'Comédie',
+#             'pays': 'France',
+#             'salles': 100,
+#             'studio': 'Pathé',
+#             'date_sortie': '2025-01-01'
+#         }]
+#         mock_acteurs.return_value = ['Acteur A']
+#         mock_realisateurs.return_value = ['Réalisateur A']
+#         mock_predict.side_effect = lambda films: [{
+#             **films[0],
+#             'scoring_acteurs_realisateurs': 5,
+#             'coeff_studio': 2,
+#             'prediction_entrees': 123456,
+#             'estimation_recette_hebdo': 600000
+#         }]
+
+#         client = Client()
+#         response = client.get("/")
+#         self.assertEqual(response.status_code, 200)
+#         self.assertTemplateUsed(response, "main/home_page.html")
+#         self.assertIn("films", response.context)
+#         self.assertEqual(response.context["films"][0]["prediction_entrees"], 123456)
 
 
 # Petit exemple ultra simple :

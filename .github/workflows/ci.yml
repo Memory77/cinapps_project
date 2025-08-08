@@ -1,0 +1,36 @@
+name: ✅ CI - Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: ✅ Run tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: 📁 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 📦 Install deps (API_s)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r API_s/requirements.txt
+
+      - name: 🧪 Pytest (API_s)
+        run: pytest API_s/tests.py
+
+      - name: 📦 Install deps (cinapps)
+        run: pip install -r cinapps/requirements.txt
+
+      - name: 🧪 Django tests
+        working-directory: cinapps
+        run: python manage.py test
