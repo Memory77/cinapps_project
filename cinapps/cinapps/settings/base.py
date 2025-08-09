@@ -190,3 +190,15 @@ if 'test' in sys.argv:
             'NAME': ':memory:',
         }
     }
+
+
+##Config VPS / Nginx / HTTPS 
+ALLOWED_HOSTS = ["156.244.5.89", "localhost", "127.0.0.1"]
+
+CSRF_TRUSTED_ORIGINS = ["https://156.244.5.89/"]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
