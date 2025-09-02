@@ -193,8 +193,9 @@ Docker Compose ≥ v2
 
 ## **2️⃣ Lancer l’application**
 Depuis la racine du projet :
-'''docker compose up --build -d'''
+docker compose up --build -d
 
 ## **4️⃣ Arrêter les services**
-'''docker compose down -v'''
+docker compose down -v
+
 
