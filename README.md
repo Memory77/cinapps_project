@@ -180,20 +180,21 @@ Exemple de requête :
 
 <img width="1008" height="574" alt="image" src="https://github.com/user-attachments/assets/e11159e6-5a24-405f-b907-e3c15743a9d7" />
 
-🐳 Déploiement avec Docker Compose
+## 🐳 **Déploiement avec Docker Compose**
 
 Tous les services (Django, API CRUD, API de prédiction, MySQL, Scrapy, Streamlit) sont conteneurisés et orchestrés via Docker Compose.
 Cela permet un déploiement reproductible et simplifié
 
-1️⃣ Prérequis
+## **1️⃣ Prérequis**
 
 Docker ≥ 20.x
 
 Docker Compose ≥ v2
 
-2️⃣ Lancer l’application
-# Depuis la racine du projet
-docker compose up --build -d
+## **2️⃣ Lancer l’application**
+Depuis la racine du projet :
+'''docker compose up --build -d'''
 
-4️⃣ Arrêter les services
-docker compose down -v
+## **4️⃣ Arrêter les services**
+'''docker compose down -v'''
+
