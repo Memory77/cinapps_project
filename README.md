@@ -99,7 +99,8 @@ CREATE TABLE Participations (
     FOREIGN KEY (id_personne) REFERENCES Personnes(id_personne) ON DELETE CASCADE
 );
 
-![image](https://github.com/user-attachments/assets/fdebdcb1-513f-40cd-998f-5f1e0bd64a1f)
+<img width="443" height="628" alt="image" src="https://github.com/user-attachments/assets/8677a59e-8694-4a19-b691-afd33b76117b" />
+
 
 ### **2️⃣ Démarrer l’API CRUD (FastAPI)**
 ```bash
@@ -197,6 +198,7 @@ docker compose up --build -d
 
 ## **4️⃣ Arrêter les services**
 docker compose down -v
+
 
 
 
