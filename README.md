@@ -59,7 +59,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🎬 **Lancer les services**
+## **Lancer les services**
 
 ### **1️⃣ Démarrer la base de données**
 ```bash
@@ -197,6 +197,7 @@ docker compose up --build -d
 
 ## **4️⃣ Arrêter les services**
 docker compose down -v
+
 
 
 
