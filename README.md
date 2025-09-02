@@ -11,7 +11,7 @@ Le projet est composé de plusieurs **composants interconnectés** :
 4. **Streamlit** (Interface utilisateur) → Affichage interactif des films et des prédictions.
 5. **Base de données MySQL** → Stockage des films.
 
-![image](https://github.com/user-attachments/assets/3167852a-d035-435b-8804-71fe26ed7f86)
+<img width="1090" height="472" alt="image" src="https://github.com/user-attachments/assets/8d73e32c-7c99-40cf-9078-0e440d69bf14" />
 
 ---
 
@@ -178,42 +178,22 @@ Exemple de requête :
 
 ---
 
-## **📊 Flux de données**
-1. **L'utilisateur se connecte** et récupère un **token JWT** depuis l'API CRUD.
-2. **L'API CRUD récupère les films** dans la base MySQL et les envoie à **Streamlit**.
-3. **Streamlit affiche les films** et les envoie à l'**API de prédiction**.
-4. **L’API de prédiction** renvoie une estimation des entrées pour chaque film.
-5. **Les résultats sont affichés** dans **Streamlit** sous forme de **tableau et graphique**.
+<img width="1008" height="574" alt="image" src="https://github.com/user-attachments/assets/e11159e6-5a24-405f-b907-e3c15743a9d7" />
 
----
+🐳 Déploiement avec Docker Compose
 
-## 📚 **Technologies utilisées**
-- **Django** (Back-end principal)
-- **FastAPI** (API CRUD + API de prédiction)
-- **Streamlit** (Interface utilisateur)
-- **MySQL** (Base de données)
-- **JWT** (Authentification sécurisée)
-- **Pandas, NumPy, Scikit-Learn** (Traitement des données et ML)
+Tous les services (Django, API CRUD, API de prédiction, MySQL, Scrapy, Streamlit) sont conteneurisés et orchestrés via Docker Compose.
+Cela permet un déploiement reproductible et simplifié
 
----
+1️⃣ Prérequis
 
-## 🛠️ **Développement et Contribution**
-1. **Forker le repo**
-2. **Créer une branche** : `git checkout -b feature-nouvelle-fonctionnalité`
-3. **Faire des modifications et commit** : `git commit -m "Ajout d'une nouvelle fonctionnalité"`
-4. **Pusher sur GitHub** : `git push origin feature-nouvelle-fonctionnalité`
-5. **Créer une Pull Request**
+Docker ≥ 20.x
 
----
+Docker Compose ≥ v2
 
-## 🔥 **TODO et améliorations possibles**
-- ✅ Ajouter un **système d’authentification complet**
-- ✅ Intégrer une **base de données propre**
-- 🔲 Améliorer l’interface **Streamlit** (filtres, affichage des détails…)
-- 🔲 Optimiser les **requêtes vers l’API de prédiction**
-- 🔲 Ajouter **des tests unitaires**
+2️⃣ Lancer l’application
+# Depuis la racine du projet
+docker compose up --build -d
 
----
-
-## 🏆 **Crédits et remerciements**
-Projet réalisé par **Memory77** ✨.
+4️⃣ Arrêter les services
+docker compose down -v
