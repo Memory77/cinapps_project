@@ -1,9 +1,9 @@
 # Cinapps Project
 
-## 🚀 Introduction
+##  Introduction
 Cinapps est une application permettant de prédire les entrées en salle de cinéma pour un film donné. 
 
-### 🔹 **Architecture du projet**
+###  **Architecture du projet**
 Le projet est composé de plusieurs **composants interconnectés** :
 1. **Django** (Back-end principal) → Interface et gestion des prédictions.
 2. **API CRUD (FastAPI)** → Gestion des films avec authentification via JWT.
@@ -197,5 +197,6 @@ docker compose up --build -d
 
 ## **4️⃣ Arrêter les services**
 docker compose down -v
+
 
 
